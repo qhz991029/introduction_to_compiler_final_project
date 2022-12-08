@@ -1,0 +1,17 @@
+var i,j,a[3][2];
+begin
+    for i := 0 to 2 do
+    begin
+        for j := 0 to 1 do
+        begin
+            a[i][j] := i + j;
+        end;
+    end;
+    for i := 0 to 2 do
+    begin
+        for j := 0 to 1 do
+        begin
+            writeln(a[i][j]);
+        end;
+    end;
+end.
