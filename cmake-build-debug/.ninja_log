@@ -1,0 +1,13 @@
+# ninja log v5
+7	112	6923452860854062	CMakeFiles/introduction_to_compiler_final_project.dir/set.c.obj	3c580b2a1c03d7c2
+3	124	6923456900818322	CMakeFiles/introduction_to_compiler_final_project.dir/evl.c.obj	ff47f1ab5c50b183
+264	574	6923456905214755	introduction_to_compiler_final_project.exe	12c61a99aa1f1f47
+8	263	6923456902199647	CMakeFiles/introduction_to_compiler_final_project.dir/compile.c.obj	7dcd8d4e9e31f9df
+1	203	6923458638827670	build.ninja	a6208ae27c9979d7
+7	115	6923458640731654	CMakeFiles/introduction_to_compiler_final_project.dir/set.c.obj	3c580b2a1c03d7c2
+3	213	6923458641713887	CMakeFiles/introduction_to_compiler_final_project.dir/PL0.c.obj	f1cd023655160881
+214	406	6923458643609085	introduction_to_compiler_final_project.exe	47323ab6da8dbee2
+2	220	6923459025623613	CMakeFiles/introduction_to_compiler_final_project.dir/PL0.c.obj	f1cd023655160881
+220	463	6923459028061738	introduction_to_compiler_final_project.exe	47323ab6da8dbee2
+3	213	6923459963431840	CMakeFiles/introduction_to_compiler_final_project.dir/PL0.c.obj	f1cd023655160881
+214	417	6923459965412375	introduction_to_compiler_final_project.exe	47323ab6da8dbee2

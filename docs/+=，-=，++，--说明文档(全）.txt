@@ -1,24 +1,24 @@
 +=,-=,++,--,:
 systype: SYM_ADDEQU,SYM_SUBEQU,SYM_ADDADD,SYM_SUBSUB
 error 13:"':=','+=','-=' expected."
-getsym()里修改如下：最后在NSYM数组里查找的时候，把加减号拿出来直接查找判断是赋值，自增自减还是单独的数组里的加减号。
-（只有后置）
+getsym()锟斤拷锟睫革拷锟斤拷锟铰ｏ拷锟斤拷锟斤拷锟絅SYM锟斤拷锟斤拷锟斤拷锟斤拷业锟绞憋拷颍鸭蛹锟斤拷锟斤拷贸锟斤拷锟街憋拷硬锟斤拷锟斤拷卸锟斤拷歉锟街碉拷锟斤拷锟斤拷锟斤拷约锟斤拷锟斤拷堑锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟侥加硷拷锟脚★拷
+锟斤拷只锟叫猴拷锟矫ｏ拷
 else
 	{ // other tokens
 		i = NSYM;
-		csym[0] = ch;
-		while (csym[i--] != ch);
+		csym[0] = last_char_read;
+		while (csym[i--] != last_char_read);
 		if (++i)
 		{
-			if(ch=='+')
+			if(last_char_read=='+')
 			{
 				getch();
-				if(ch=='=')
+				if(last_char_read=='=')
 				{
 					sym=SYM_ADDEQU;
 					getch();
 				}
-				else  if(ch=='+')
+				else  if(last_char_read=='+')
 				{
 					sym=SYM_ADDADD;
 					getch();
@@ -28,15 +28,15 @@ else
 					sym=SYM_PLUS;
 				}
 			}
-			else if(ch=='-')
+			else if(last_char_read=='-')
 			{
 				getch();
-				if(ch=='=')
+				if(last_char_read=='=')
 				{
 					sym=SYM_SUBEQU;
 					getch();
 				}
-				else if(ch=='-')
+				else if(last_char_read=='-')
 				{
 					sym=SYM_SUBSUB;
 					getch();
@@ -50,9 +50,9 @@ else
 			}
 		}
 
-(+前置)
+(+前锟斤拷)
 
-statement里修改如下：
+statement锟斤拷锟睫革拷锟斤拷锟铰ｏ拷
 
 
 if (sym == SYM_IDENTIFIER)
@@ -70,7 +70,7 @@ if (sym == SYM_IDENTIFIER)
 		getsym();
 		if (sym == SYM_BECOMES||sym==SYM_ADDEQU||sym==SYM_SUBEQU)
 		{
-			int saveSym=sym;//用saveSym保存之前的sym,因为后面分析完表达式后会多读出一//个符号
+			int saveSym=sym;//锟斤拷saveSym锟斤拷锟斤拷之前锟斤拷sym,锟斤拷为锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟绞斤拷锟斤拷锟斤拷锟斤拷一//锟斤拷锟斤拷锟斤拷
 			getsym();
 			expression(uniteset(fsys,createset(SYM_SEMICOLON,SYM_NULL)));
 		    mk = (mask*) &table[i];

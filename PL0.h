@@ -1,5 +1,9 @@
 #include <stdio.h>
-#include "evl.c"
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include "evl.h"
+#include "set.h"
 
 #define OPTM    1
 #define OPTM_CY 0
@@ -17,6 +21,7 @@
 
 #define MAXSYM     30     // maximum number of symbols  
 #define STACKSIZE  1000   // maximum storage
+symset phi, decleration_begin_sys, statement_begin_sys, factor_begin_sys, rel_set;
 enum symtype {
     SYM_NULL,
     SYM_IDENTIFIER,
@@ -165,20 +170,20 @@ char *err_msg[] =
                         /* 37 */"Dimension of the array must be determined."};
 
 //////////////////////////////////////////////////////////////////////
-char ch; // last character read
-int sym; // last symbol read
+char last_char_read; // last character read
+int last_sym_read; // last symbol read
 char id[MAXIDLEN + 1]; // last identifier read
-int num; // last number read
-int cc; // character count
-int ll; // line length
+int last_num_read; // last number read
+int char_count; // character count
+int line_length; // line length
 int kk;
 int err;
-int cx; // index of current instruction to be generated.
+int current_instruction_index; // index of current instruction to be generated.
 int level = 0;
 int loop_level = 0;
 int block_level = 0;
 int block_num = 1;
-int blc[MAXLEVEL]; //block_level_count
+int block_level_count[MAXLEVEL]; //block_level_count
 int tx = 0;
 int tx_[100]; //每递归调用一次block开始时table的tx位置
 int dim = 0;
@@ -186,24 +191,24 @@ int array_size = 1;
 int latit[MAXDIMLEN];
 int proth[100]; //cy_quote
 typedef struct cxlink {
-    int cxbrk;
+    int break_code_index;
     struct cxlink *next;
-} *cxbrklink;
+} *break_code_index_list;
 
-typedef struct prolink {
+typedef struct procedure_link {
     int table_adr;
     int start;
     int end;
-    struct prolink *next;
-} prolink;
+    struct procedure_list *next;
+} procedure_list;
 
 typedef struct { //cy
     int flag;
     int sign;
-    cxbrklink then;
-} cxb; //存放break代码地址
+    break_code_index_list then;
+} break_code_block; //存放break代码地址
 
-cxb cxbreak;
+break_code_block break_code_index;
 char line[80];
 
 instruction code[CXMAX];
@@ -247,9 +252,9 @@ typedef struct {
     int cnt;
     int lpl;//loop_level
     int blkNum;
-} comtab;
+} var_obj;
 
-comtab table[TXMAX];
+var_obj table[TXMAX];
 
 typedef struct {
     char name[MAXIDLEN + 1];
@@ -281,5 +286,43 @@ typedef struct {
 } array;
 
 FILE *infile;
-
+int jdgok(int curBlkNum, int saveBlkNum);
+void print_table();
+void in_block();
+void out_block(int saveBlkNum, int saveBlkLvl);
+void error(int n);
+void getch(void);
+void get_next_symbol(void);
+void gen_instruction(int x, int y, int z);
+void enter_obj_2_table(int kind);
+void test(symset s1, symset s2, int n);
+void enter_par();
+void modify_table(int numOfPar);
+void print_table();
+int position(char *id);
+void const_declaration(symset fsys);
+void var_declaration(void);
+void list_code(int from, int to);
+int const_factor(symset fsys);
+int const_term(symset fsys);
+int const_expression(symset fsys);
+void dim_declaration(void);
+void optimize(mask *mk, int saveCx);
+void optimize_term(mask *mk, int saveCx);
+mask *factor(symset fsys);
+mask *term(symset fsys);
+mask *expression(symset fsys);
+void condition_factor(symset fsys);
+void condition_term(symset fsys);
+void condition(symset fsys);
+void statement(symset fsys);
+int get_array_size(int i);
+int search_var(int len, int from);
+int search_pro(int n);
+void cut_code(int start, int end);
+int locate(int n, int star_tx, int end_tx, int f);
+void cut_pro_var_code(int star_cx, int end_cx, int star_tx, int end_tx);
+void block(symset fsys);
+int get_base_addr(int stack[], int currentLevel, int levelDiff);
+void interpret();
 // EOF PL0.h

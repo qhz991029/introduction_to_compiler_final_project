@@ -5,19 +5,19 @@ getch()里修改如下：最后在NSYM数组里查找的时候，把加减号拿
 else
 	{ // other tokens
 		i = NSYM;
-		csym[0] = ch;
-		while (csym[i--] != ch);
+		csym[0] = last_char_read;
+		while (csym[i--] != last_char_read);
 		if (++i)
 		{
-			if(ch=='+')
+			if(last_char_read=='+')
 			{
 				getch();
-				if(ch=='=')
+				if(last_char_read=='=')
 				{
 					sym=SYM_ADDEQU;
 					getch();
 				}
-				else  if(ch=='+')
+				else  if(last_char_read=='+')
 				{
 					sym=SYM_ADDADD;
 					getch();
@@ -27,15 +27,15 @@ else
 					sym=SYM_PLUS;
 				}
 			}
-			else if(ch=='-')
+			else if(last_char_read=='-')
 			{
 				getch();
-				if(ch=='=')
+				if(last_char_read=='=')
 				{
 					sym=SYM_SUBEQU;
 					getch();
 				}
-				else if(ch=='-')
+				else if(last_char_read=='-')
 				{
 					sym=SYM_SUBSUB;
 					getch();
