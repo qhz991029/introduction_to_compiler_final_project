@@ -1,27 +1,8 @@
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-
-typedef struct enode {
-    int elem;
-    int cnt;
-    int lpl;
-    struct enode *next;
-} enode, *evl;
-
-
-evl createevl(int data, .../* SYM_NULL */);
-
-void destroyevl(evl s);
-
-evl uniteevl(evl s1, evl s2);
-
-int inevl(int elem, evl s);
-
+#include "evl.h"
 evl phi_evl = NULL;
 
-evl uniteevl(evl s1, evl s2) {
+evl unite_evl(evl s1, evl s2) {
     evl s;
     enode *p;
 
@@ -72,9 +53,9 @@ evl uniteevl(evl s1, evl s2) {
     p->next = NULL;
 
     return s;
-} // uniteevl
+} // unite_evl
 
-void evlinsert(evl s, int elem, int cnt, int lpl) {
+void insert_evl(evl s, int elem, int cnt, int lpl) {
     enode *p = s;
     enode *q;
 
@@ -88,9 +69,9 @@ void evlinsert(evl s, int elem, int cnt, int lpl) {
     q->lpl = lpl;
     q->next = p->next;
     p->next = q;
-} // evlinsert
+} // insert_evl
 
-evl createevl(int elem, .../* SYM_NULL */) {
+evl create_evl(int data, .../* SYM_NULL */) {
     va_list list;
     evl s;
     int cnt;
@@ -102,20 +83,20 @@ evl createevl(int elem, .../* SYM_NULL */) {
     s->lpl = 0;
     s->next = NULL;
 
-    va_start(list, elem);
+    va_start(list, data);
     cnt = va_arg(list, int);
     lpl = va_arg(list, int);
-    while (elem) {
-        evlinsert(s, elem, cnt, lpl);
-        elem = va_arg(list, int);
+    while (data) {
+        insert_evl(s, data, cnt, lpl);
+        data = va_arg(list, int);
         cnt = va_arg(list, int);
         lpl = va_arg(list, int);
     }
     va_end(list);
     return s;
-} // createevl
+} // create_evl
 
-void destroyevl(evl s) {
+void destroy_evl(evl s) {
     enode *p;
 
     while (s) {
@@ -127,9 +108,9 @@ void destroyevl(evl s) {
         p->lpl = 0;
         free(p);
     }
-} // destroyevl
+} // destroy_evl
 
-int inevl(int elem, evl s) {
+int is_in_evl(int elem, evl s) {
     s = s->next;
     while (s && s->elem < elem)   // modified by alex, 2015-12-25,  s->elem < elem
         s = s->next;
@@ -138,6 +119,6 @@ int inevl(int elem, evl s) {
         return 1;
     else
         return 0;
-} // inevl
+} // is_in_evl
 
 // EOF set.c

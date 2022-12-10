@@ -6,7 +6,7 @@ typedef struct snode {
     struct snode *next;
 } snode, *symset;
 
-symset phi, declbegsys, statbegsys, facbegsys, relset;
+extern symset phi, decleration_begin_sys, statement_begin_sys, factor_begin_sys, rel_set;
 
 symset createset(int data, .../* SYM_NULL */);
 

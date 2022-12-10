@@ -1,0 +1,3 @@
+C:/Users/35802/Desktop/pl0done/introduction_to_compiler_final_project/cmake-build-debug/CMakeFiles/introduction_to_compiler_final_project.dir
+C:/Users/35802/Desktop/pl0done/introduction_to_compiler_final_project/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/35802/Desktop/pl0done/introduction_to_compiler_final_project/cmake-build-debug/CMakeFiles/rebuild_cache.dir
