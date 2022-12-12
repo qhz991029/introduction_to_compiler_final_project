@@ -1606,7 +1606,7 @@ void statement(symset fsys) {
             error(4);//TODO:missing (
         }
 
-        set1 = createset(SYM_RPAREN,SYM_COMMA,SYM_NULL);
+        set1 = createset(SYM_COMMA,SYM_NULL);
         set = uniteset(fsys, set1);
 
         get_next_symbol();
@@ -1619,13 +1619,16 @@ void statement(symset fsys) {
         mk->cnt++;
         gen_instruction(LOD, level - mk->level, mk->address);//top = A
 
+
         if(last_sym_read == SYM_COMMA) {
 
-            set1 = createset(SYM_COMMA,SYM_RPAREN, SYM_NULL);
+            set1 = createset(SYM_COMMA,SYM_NULL);
             set = uniteset(set1, fsys);
 
             get_next_symbol();
-            expression(set);//top = b
+            int copy_exp_start = current_instruction_index;
+            expression(set);
+            int copy_exp_end = current_instruction_index;
 
             destroyset(set1);
             destroyset(set);
@@ -1633,6 +1636,7 @@ void statement(symset fsys) {
             gen_instruction(LMT,0,1);
             gen_instruction(LMT,0,1);
             gen_instruction(OPR, 0, OPR_EQU);
+            gen_instruction(OPR, 0,  OPR_NOT);
             int equ_jump_index = current_instruction_index;//当A=B时直接jump
             gen_instruction(JPC,0,0);
 
@@ -1640,6 +1644,7 @@ void statement(symset fsys) {
             int loop_step;
             int is_step_expression = 0;
             //计算step
+            int for_loop_entry = current_instruction_index;
             if(last_sym_read == SYM_RPAREN){
                 loop_step = 1;
                 gen_instruction(LIT, 0, loop_step);
@@ -1647,7 +1652,7 @@ void statement(symset fsys) {
                 goto LOOP;
             } else if(last_sym_read == SYM_COMMA){
                 is_step_expression = 1;
-                set1 = createset(SYM_RPAREN,SYM_COMMA, SYM_NULL);
+                set1 = createset(SYM_COMMA, SYM_NULL);
                 set = uniteset(set1, fsys);
 
                 get_next_symbol();
@@ -1663,7 +1668,7 @@ void statement(symset fsys) {
 
             LOOP:;
             if(last_sym_read == SYM_RPAREN){
-                int for_loop_entry = current_instruction_index;
+
 
                 set1 = createset(SYM_SEMICOLON,SYM_NULL);
                 set = uniteset(set1, fsys);
@@ -1676,19 +1681,21 @@ void statement(symset fsys) {
 
                 gen_instruction(LOD, level - mk->level, mk->address);
                 gen_instruction(OPR, 0, OPR_ADD);
+                gen_instruction(STO, level - mk->level, mk->address);
+                mk->cnt++;
+                gen_instruction(LOD, level - mk->level, mk->address);
 
-                set1 = createset(SYM_RPAREN,SYM_COMMA, SYM_NULL);
-                set = uniteset(set1, fsys);
-
-                get_next_symbol();
-                expression(set);
-
-                destroyset(set1);
-                destroyset(set);
+                int copy_temp = 0;
+                while (copy_temp != copy_exp_end - copy_exp_start){
+                    code[current_instruction_index + copy_temp] = code[copy_exp_start + copy_temp];
+                    copy_temp++;
+                }
+                current_instruction_index += copy_temp;
 
                 gen_instruction(OPR, 0, OPR_LEQ);//A<=B?
                 gen_instruction(LMT,0,1);//Entry A<=B?
                 gen_instruction(OPR,0,OPR_EQU);
+                gen_instruction(OPR, 0,OPR_NOT);
                 int final_jump_point = current_instruction_index;
                 gen_instruction(JPC,0,0);
                 int out_code_index = current_instruction_index;
@@ -2176,7 +2183,8 @@ void interpret() {
                 top--;
                 break;
             case LMT:
-                stack[++top] = stack[top - i.a];
+                stack[top + 1] = stack[top - i.a];
+                top = top + 1;
                 break;
 
         } // switch
@@ -2193,7 +2201,7 @@ void main(int argc, char *argv[]) {
     symset set, set1, set2;
 
     if (argc == 1)
-        strcpy(s, "../example/not.txt");
+        strcpy(s, "../example/for.txt");
     else
         strcpy(s, argv[1]);
     if ((infile = fopen(s, "r")) == NULL) {

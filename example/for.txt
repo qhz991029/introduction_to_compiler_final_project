@@ -4,7 +4,7 @@ begin
   j := 2;
 end;
 begin
-  for(var i:(1,10))
+  for(var i:(50 + 50,2, -3))
   begin
       write(i);
   end;
