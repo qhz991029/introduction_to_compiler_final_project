@@ -12,12 +12,12 @@
 #define NRW        25     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       13     // maximum number of symbols in array ssym and csym
+#define NSYM       14    // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
-#define MAXINS   10
+#define MAXINS   11
 
 #define MAXSYM     30     // maximum number of symbols  
 #define STACKSIZE  1000   // maximum storage
@@ -75,7 +75,8 @@ enum symtype {
     SYM_SUBSUB,
     SYM_DIVEQU,
     SYM_MULEQU,
-    SYM_MODEQU
+    SYM_MODEQU,
+    SYM_COLON
 };
 
 enum idtype {
@@ -83,7 +84,7 @@ enum idtype {
 };
 
 enum opcode {
-    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD
+    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT
 };
 int optime[100] =
         {
@@ -228,13 +229,13 @@ int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
 
 int ssym[NSYM + 1] = {SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
                       SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
-                      SYM_LSQUARE, SYM_RSQUARE, SYM_MODEQU};
+                      SYM_LSQUARE, SYM_RSQUARE, SYM_MODEQU, SYM_COLON};
 
 char csym[NSYM + 1] = {' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';',
-                       '[', ']', '%'};
+                       '[', ']', '%', ':'};
 
 char *mnemonic[MAXINS] = {"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP",
-                          "JPC", "STA", "LAD"};
+                          "JPC", "STA", "LAD", "LMT"};
 
 typedef struct dim {
     int dim_len;
