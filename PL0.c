@@ -352,11 +352,11 @@ void print_table() {
     }
 }
 // locates identifier in symbol table.
-int position(char *id) {
+int get_identifier_id(char *identifier) {
     int i;
-    strcpy(table[0].name, id);
+    strcpy(table[0].name, identifier);
     i = tx + 1;
-    while (strcmp(table[--i].name, id) != 0);
+    while (strcmp(table[--i].name, identifier) != 0);
     mask *mk = (mask *) &table[i];
     array *ar = (array *) &table[i];
     if (mk->level == level)   //cy_quote
@@ -428,7 +428,7 @@ int const_factor(symset fsys) {
     test(factor_begin_sys, fsys, 24); // The symbol can not be as the beginning of an expression.
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
-            if ((i = position(id)) == 0) {
+            if ((i = get_identifier_id(id)) == 0) {
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else {
@@ -586,7 +586,7 @@ void optimize(mask *mk, int saveCx) {
     strcpy(id, mk->name);
     if (cnt > 1) {
 
-        int i = position(id);
+        int i = get_identifier_id(id);
         if (!i) {
             enter_obj_2_table(ID_VARIABLE);
             mask *tp = (mask *) &table[tx];
@@ -601,7 +601,7 @@ void optimize(mask *mk, int saveCx) {
             evl e1 = mk->evl;
             evl e2 = table[i].evl;
 
-            //flag=jdgok(table[i].blkNum,block_num);
+            //is_break_appear=jdgok(table[i].blkNum,block_num);
             flag = jdgok(block_num, table[i].blkNum);
             table[i].blkNum = block_num;
 
@@ -650,7 +650,7 @@ void optimize_term(mask *mk, int saveCx) {
     strcpy(id, mk->name);
     if (cnt > 1) {
 
-        int i = position(id);
+        int i = get_identifier_id(id);
         if (!i) {
             //do nothing
 
@@ -704,7 +704,7 @@ mask *factor(symset fsys) {
 
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
-            if ((i = position(id)) == 0) {
+            if ((i = get_identifier_id(id)) == 0) {
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else {
@@ -1066,7 +1066,7 @@ void statement(symset fsys) {
     symset set1, set;
     if (last_sym_read == SYM_IDENTIFIER){   // variable assignment
         mask *mk;
-        i = position(id);
+        i = get_identifier_id(id);
         array *ar = (array *) &table[i];
         if (!i) {
             error(11); // Undeclared identifier.
@@ -1204,9 +1204,9 @@ void statement(symset fsys) {
         gen_instruction(OPR, 0, OPR_RET); // return
     }
     else if (last_sym_read == SYM_BREAK) {
-        if (break_code_index.sign) {
+        if (break_code_index.is_in_loop_sign) {
             break_code_index_list pp;
-            if (break_code_index.flag) {
+            if (break_code_index.is_break_appear) {
                 pp = break_code_index.then;
                 while (pp->next) {
                     pp = pp->next;
@@ -1215,7 +1215,7 @@ void statement(symset fsys) {
                 pp = pp->next;
                 pp->next = NULL;
             } else {
-                break_code_index.flag = 1;
+                break_code_index.is_break_appear = 1;
                 pp = (break_code_index_list) malloc(sizeof(struct cxlink));
                 break_code_index.then = pp;
                 pp->next = NULL;
@@ -1229,14 +1229,13 @@ void statement(symset fsys) {
                 get_next_symbol();
             }
         }
-////////////////////////////////////////////////////////////
     }  //cy
     else if (last_sym_read == SYM_CALL) {
         get_next_symbol();
         if (last_sym_read != SYM_IDENTIFIER) {
             error(14); // There must be an identifier to follow the 'call'.
         } else {
-            if (!(i = position(id))) {
+            if (!(i = get_identifier_id(id))) {
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else if (table[i].kind == ID_PROCEDURE) {
@@ -1311,8 +1310,8 @@ void statement(symset fsys) {
         get_next_symbol();
 
         break_code_block cxbsaved = break_code_index; //cy
-        break_code_index.flag = 0; //cy
-        break_code_index.sign = 1; //cy
+        break_code_index.is_break_appear = 0; //cy
+        break_code_index.is_in_loop_sign = 1; //cy
         break_code_index.then = NULL; //cy
         statement(set1);
         if (last_sym_read != SYM_SEMICOLON) {
@@ -1325,7 +1324,7 @@ void statement(symset fsys) {
                 condition(set);
                 gen_instruction(JPC, 0, cx1);
 
-                if (break_code_index.flag)   //cy
+                if (break_code_index.is_break_appear)   //cy
                 {
                     break_code_index_list p = break_code_index.then;
                     while (p) {
@@ -1336,9 +1335,9 @@ void statement(symset fsys) {
                     }
 
                 }
-                break_code_index.flag = cxbsaved.flag; //cy
+                break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
                 break_code_index.then = cxbsaved.then; //cy
-                break_code_index.sign = cxbsaved.sign; //cy
+                break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
 
             } else
                 error(31); //missing repeat
@@ -1439,14 +1438,14 @@ void statement(symset fsys) {
         }
 
         break_code_block cxbsaved = break_code_index; //cy
-        break_code_index.flag = 0; //cy
-        break_code_index.sign = 1; //cy
+        break_code_index.is_break_appear = 0; //cy
+        break_code_index.is_in_loop_sign = 1; //cy
         break_code_index.then = NULL; //cy
         statement(fsys);
         gen_instruction(JMP, 0, cx1);
         code[cx2].a = current_instruction_index;
         out_block(saveBlkNum, saveBlkLvl);
-        if (break_code_index.flag)   //cy
+        if (break_code_index.is_break_appear)   //cy
         {
             break_code_index_list p = break_code_index.then;
             while (p) {
@@ -1457,9 +1456,9 @@ void statement(symset fsys) {
             }
             break_code_index.then = NULL;
         }
-        break_code_index.flag = cxbsaved.flag; //cy
+        break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
         break_code_index.then = cxbsaved.then; //cy
-        break_code_index.sign = cxbsaved.sign; //cy
+        break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
     } // while statement
     else if (last_sym_read == SYM_WRITE || last_sym_read == SYM_WRITELN){
         int saveSym = last_sym_read;
@@ -1511,7 +1510,7 @@ void statement(symset fsys) {
         //set1=createset(SYM_COMMA,SYM_PAREN,SYM_NULL);
         //set=uniteset(set1,fsys);
         if (last_sym_read == SYM_IDENTIFIER) {
-            if ((i = position(id)) == 0) {
+            if ((i = get_identifier_id(id)) == 0) {
                 error(11); //Undeclared identifier
                 get_next_symbol();
             } else {
@@ -1538,7 +1537,7 @@ void statement(symset fsys) {
         while (last_sym_read == SYM_COMMA) {
             get_next_symbol();
             if (last_sym_read == SYM_IDENTIFIER) {
-                if ((i = position(id)) == 0) {
+                if ((i = get_identifier_id(id)) == 0) {
                     error(11);
                     get_next_symbol();
                 } else {
@@ -1581,7 +1580,7 @@ void statement(symset fsys) {
         mask *mk;
         if (last_sym_read != SYM_IDENTIFIER)
             error(4);
-        i = position(id);
+        i = get_identifier_id(id);
         mk = (mask *) &table[i];
         if (i == 0)
             error(11);
@@ -1614,8 +1613,8 @@ void statement(symset fsys) {
             if (last_sym_read == SYM_DO) {
                 get_next_symbol();
                 break_code_block cxbsaved = break_code_index; //cy
-                break_code_index.flag = 0;
-                break_code_index.sign = 1;
+                break_code_index.is_break_appear = 0;
+                break_code_index.is_in_loop_sign = 1;
                 break_code_index.then = NULL;;
 
                 set1 = createset(SYM_SEMICOLON, SYM_NULL);
@@ -1628,7 +1627,7 @@ void statement(symset fsys) {
                 gen_instruction(OPR, 0, OPR_MIN);
                 gen_instruction(JMP, 0, cx1);
                 code[cx2].a = current_instruction_index;
-                if (break_code_index.flag) {
+                if (break_code_index.is_break_appear) {
                     break_code_index_list p = break_code_index.then;
                     while (p) {
                         code[p->break_code_index].a = current_instruction_index;
@@ -1638,17 +1637,18 @@ void statement(symset fsys) {
                     }
 
                 }
-                break_code_index.flag = cxbsaved.flag; //cy
+                break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
                 break_code_index.then = cxbsaved.then; //cy
-                break_code_index.sign = cxbsaved.sign; //cy
+                break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
 
             } else
                 error(18); //do expected
-        } else if (last_sym_read == SYM_TO) {
+        }
+        else if (last_sym_read == SYM_TO) {
             get_next_symbol();
             break_code_block cxbsaved = break_code_index;
-            break_code_index.flag = 0;
-            break_code_index.sign = 1; //cy
+            break_code_index.is_break_appear = 0;
+            break_code_index.is_in_loop_sign = 1; //cy
             break_code_index.then = NULL;; //cy
             cx1 = current_instruction_index;
             gen_instruction(STO, level - mk->level, mk->address);
@@ -1674,10 +1674,10 @@ void statement(symset fsys) {
                 gen_instruction(OPR, 0, OPR_ADD);
                 gen_instruction(JMP, 0, cx1);
                 code[cx2].a = current_instruction_index;
-                if (break_code_index.flag)   //cy
+                if (break_code_index.is_break_appear)   //cy
                 {
                     break_code_index_list p = break_code_index.then;
-                    while (p) {
+                    while (p) {//一层for中可能有多个break，用list串起来,遍历list将其逐个回填
                         code[p->break_code_index].a = current_instruction_index;
                         break_code_index_list q = p;
                         free(p);
@@ -1685,9 +1685,9 @@ void statement(symset fsys) {
                     }
 
                 }
-                break_code_index.flag = cxbsaved.flag; //cy
+                break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
                 break_code_index.then = cxbsaved.then; //cy
-                break_code_index.sign = cxbsaved.sign; //cy
+                break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
 
             } else
                 error(18); //do expected
@@ -2203,8 +2203,8 @@ void main(int argc, char *argv[]) {
     kk = MAXIDLEN;
 
     get_next_symbol();
-    break_code_index.flag = 0; //cy
-    break_code_index.sign = 0; //cy
+    break_code_index.is_break_appear = 0; //cy
+    break_code_index.is_in_loop_sign = 0; //cy
     break_code_index.then = NULL; //cy
     set1 = createset(SYM_PERIOD, SYM_NULL);
     set2 = uniteset(decleration_begin_sys, statement_begin_sys);

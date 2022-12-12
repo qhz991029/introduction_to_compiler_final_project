@@ -203,8 +203,8 @@ typedef struct procedure_link {
 } procedure_list;
 
 typedef struct { //cy
-    int flag;
-    int sign;
+    int is_break_appear;
+    int is_in_loop_sign;//当前break是否在某个循环中
     break_code_index_list then;
 } break_code_block; //存放break代码地址
 
@@ -299,7 +299,7 @@ void test(symset s1, symset s2, int n);
 void enter_par();
 void modify_table(int numOfPar);
 void print_table();
-int position(char *id);
+int get_identifier_id(char *identifier);
 void const_declaration(symset fsys);
 void var_declaration(void);
 void list_code(int from, int to);
