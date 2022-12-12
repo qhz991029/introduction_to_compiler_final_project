@@ -1,8 +1,11 @@
 // pl0 compiler source code
 //for Visual Studio
-#pragma warning(disable:4996)
+//#pragma warning(disable:4996)
 #include "PL0.h"
 #include "set.h"
+#include "evl.h"
+#include "evl.c"
+#include "set.c"
 
 int data_alloc_index[MAXLEVEL]; // data allocation index
 int zx[MAXLEVEL];
@@ -470,6 +473,10 @@ int const_factor(symset fsys) {
             } else {
                 error(22); // Missing ')'.
             }
+        } else if (last_sym_read == SYM_MINUS) {
+            get_next_symbol();
+            n = const_factor(factor_begin_sys) * (-1);
+            destroyset(set);
         }
     } // while
     return n;
