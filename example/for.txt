@@ -4,8 +4,14 @@ begin
   j := 2;
 end;
 begin
-  for(var i:(50 + 50,2, -3))
+  for(var i:(10,1, -1))
   begin
       write(i);
+      writeln();
+      for(var j:(1,1, 1))
+      begin
+          write(j);
+      end;
+      writeln();
   end;
   end.

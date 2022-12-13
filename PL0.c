@@ -1579,15 +1579,15 @@ void statement(symset fsys) {
         break_code_index.is_break_appear = 0;
         break_code_index.is_in_loop_sign = 1;
         break_code_index.then = NULL;
-
+        // for ( var id:(
         get_next_symbol();
         mask *mk;
         if (last_sym_read != SYM_LPAREN){
-            error(4);//TODO:missing (
+            error(19);//missing (
         }
         get_next_symbol();
         if (last_sym_read != SYM_VAR){
-            error(4);//TODO:missing VAR
+            error(19);//missing VAR
         }
         get_next_symbol();
         if (last_sym_read != SYM_IDENTIFIER)
@@ -1603,12 +1603,12 @@ void statement(symset fsys) {
             error(13);
         get_next_symbol();
         if (last_sym_read != SYM_LPAREN){
-            error(4);//TODO:missing (
+            error(19);// (
         }
 
         set1 = createset(SYM_COMMA,SYM_NULL);
         set = uniteset(fsys, set1);
-
+        //start
         get_next_symbol();
         expression(set);
 
@@ -1617,9 +1617,9 @@ void statement(symset fsys) {
 
         gen_instruction(STO, level - mk->level, mk->address);
         mk->cnt++;
-        gen_instruction(LOD, level - mk->level, mk->address);//top = A
+        gen_instruction(LOD, level - mk->level, mk->address);
 
-
+        // ", end )" or ", end, step )"
         if(last_sym_read == SYM_COMMA) {
 
             set1 = createset(SYM_COMMA,SYM_NULL);
@@ -1633,24 +1633,27 @@ void statement(symset fsys) {
             destroyset(set1);
             destroyset(set);
 
+            //start<end?以第一次进入for时两者大小关系为准，当某次循环后这种关系翻转时终止for loop
             gen_instruction(LMT,0,1);
             gen_instruction(LMT,0,1);
-            gen_instruction(OPR, 0, OPR_EQU);
-            gen_instruction(OPR, 0,  OPR_NOT);
-            int equ_jump_index = current_instruction_index;//当A=B时直接jump
+            gen_instruction(OPR,0,OPR_EQU);
+            int first_equal_jmp = current_instruction_index;
             gen_instruction(JPC,0,0);
-
-            gen_instruction(OPR,0,OPR_LEQ); //A<=B?
+            gen_instruction(POP,0,0);
+            int end_j = current_instruction_index;
+            gen_instruction(JMP,0,0);
+            code[first_equal_jmp].a = current_instruction_index;
+            gen_instruction(OPR,0,OPR_LES);
             int loop_step;
             int is_step_expression = 0;
             //计算step
             int for_loop_entry = current_instruction_index;
-            if(last_sym_read == SYM_RPAREN){
+            if(last_sym_read == SYM_RPAREN){//step为1
                 loop_step = 1;
                 gen_instruction(LIT, 0, loop_step);
                 get_next_symbol();
                 goto LOOP;
-            } else if(last_sym_read == SYM_COMMA){
+            } else if(last_sym_read == SYM_COMMA){//step为expression
                 is_step_expression = 1;
                 set1 = createset(SYM_COMMA, SYM_NULL);
                 set = uniteset(set1, fsys);
@@ -1663,19 +1666,24 @@ void statement(symset fsys) {
                 get_next_symbol();
                 goto LOOP;
             } else{
-                error(1);//TODO:expected ) or ,
+                error(33);
             }
-
+            //
+            //
+            //LOOP:
+            //          step = 1 / step = expression
+            //          statement
+            //          var i = i + step
+            //          end = expression(end)
+            //          if i reach end ?
+            //          Yes -> leave
+            //          NO  -> goto LOOP
             LOOP:;
             if(last_sym_read == SYM_RPAREN){
-
-
                 set1 = createset(SYM_SEMICOLON,SYM_NULL);
                 set = uniteset(set1, fsys);
-
                 get_next_symbol();
                 statement(set);
-
                 destroyset(set1);
                 destroyset(set);
 
@@ -1691,17 +1699,26 @@ void statement(symset fsys) {
                     copy_temp++;
                 }
                 current_instruction_index += copy_temp;
-
-                gen_instruction(OPR, 0, OPR_LEQ);//A<=B?
-                gen_instruction(LMT,0,1);//Entry A<=B?
+                gen_instruction(LMT,0,1);
+                gen_instruction(LMT,0,1);
                 gen_instruction(OPR,0,OPR_EQU);
-                gen_instruction(OPR, 0,OPR_NOT);
+                int equal_jmp = current_instruction_index;
+                gen_instruction(JPC,0,0);
+                gen_instruction(POP,0,0);
+                gen_instruction(POP,0,0);
+                int end_jump = current_instruction_index;
+                gen_instruction(JMP,0,0);
+                code[equal_jmp].a = current_instruction_index;
+                gen_instruction(OPR, 0, OPR_LEQ);//A<=B?
+                gen_instruction(LMT,0,1);//Entry A<B?
+                gen_instruction(OPR,0,OPR_NEQ);
                 int final_jump_point = current_instruction_index;
                 gen_instruction(JPC,0,0);
                 int out_code_index = current_instruction_index;
-
-                code[equ_jump_index].a = current_instruction_index;
                 code[final_jump_point].a = for_loop_entry;
+                code[end_jump].a = current_instruction_index;
+                code[end_j].a = current_instruction_index;
+                gen_instruction(POP,0,0);
             }else{
                 error(0);//TODO:missing )
             }
@@ -1721,11 +1738,6 @@ int get_array_size(int i){
         c *= p->dim_len;
         p = p->next;
     }
-    /*	for (int i = ar->dim_n; i; i--) {
-     printf("i:%d",i);
-     c *= p->dim_len;
-     p=p->next;
-     }*/
     return c;
 }
 
@@ -2185,6 +2197,9 @@ void interpret() {
             case LMT:
                 stack[top + 1] = stack[top - i.a];
                 top = top + 1;
+                break;
+            case POP:
+                top--;
                 break;
 
         } // switch

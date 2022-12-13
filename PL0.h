@@ -17,7 +17,7 @@
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
-#define MAXINS   11
+#define MAXINS   12
 
 #define MAXSYM     30     // maximum number of symbols  
 #define STACKSIZE  1000   // maximum storage
@@ -84,7 +84,7 @@ enum idtype {
 };
 
 enum opcode {
-    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT
+    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT, POP
 };
 int optime[100] =
         {
@@ -235,7 +235,7 @@ char csym[NSYM + 1] = {' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';',
                        '[', ']', '%', ':'};
 
 char *mnemonic[MAXINS] = {"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP",
-                          "JPC", "STA", "LAD", "LMT"};
+                          "JPC", "STA", "LAD", "LMT", "POP"};
 
 typedef struct dim {
     int dim_len;
