@@ -72,7 +72,7 @@ void getch(void) {
 } // getch
 
 void get_next_symbol(void) {
-    int i, k;
+    int , k;
     char a[MAXIDLEN + 1];
 
     while (last_char_read == ' ' || last_char_read == '\t')
@@ -113,6 +113,7 @@ void get_next_symbol(void) {
             getch();
         } else {
             last_sym_read = SYM_COLON; // :
+
         }
     } else if (last_char_read == '>') {
         getch();
@@ -352,11 +353,13 @@ void print_table() {
     }
 }
 // locates identifier in symbol table.
+
 int get_identifier_id(char *identifier) {
     int i;
     strcpy(table[0].name, identifier);
     i = tx + 1;
     while (strcmp(table[--i].name, identifier) != 0);
+
     mask *mk = (mask *) &table[i];
     array *ar = (array *) &table[i];
     if (mk->level == level)   //cy_quote
@@ -428,7 +431,9 @@ int const_factor(symset fsys) {
     test(factor_begin_sys, fsys, 24); // The symbol can not be as the beginning of an expression.
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
+
             if ((i = get_identifier_id(id)) == 0) {
+
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else {
@@ -470,6 +475,12 @@ int const_factor(symset fsys) {
             } else {
                 error(22); // Missing ')'.
             }
+
+        } else if (last_sym_read == SYM_MINUS) {
+            get_next_symbol();
+            n = const_factor(factor_begin_sys) * (-1);
+            destroyset(set);
+
         }
     } // while
     return n;
@@ -586,7 +597,9 @@ void optimize(mask *mk, int saveCx) {
     strcpy(id, mk->name);
     if (cnt > 1) {
 
+
         int i = get_identifier_id(id);
+
         if (!i) {
             enter_obj_2_table(ID_VARIABLE);
             mask *tp = (mask *) &table[tx];
@@ -601,7 +614,7 @@ void optimize(mask *mk, int saveCx) {
             evl e1 = mk->evl;
             evl e2 = table[i].evl;
 
-            //is_break_appear=jdgok(table[i].blkNum,block_num);
+
             flag = jdgok(block_num, table[i].blkNum);
             table[i].blkNum = block_num;
 
@@ -650,7 +663,9 @@ void optimize_term(mask *mk, int saveCx) {
     strcpy(id, mk->name);
     if (cnt > 1) {
 
+
         int i = get_identifier_id(id);
+
         if (!i) {
             //do nothing
 
@@ -704,7 +719,9 @@ mask *factor(symset fsys) {
 
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
+
             if ((i = get_identifier_id(id)) == 0) {
+
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else {
@@ -1066,7 +1083,9 @@ void statement(symset fsys) {
     symset set1, set;
     if (last_sym_read == SYM_IDENTIFIER){   // variable assignment
         mask *mk;
+
         i = get_identifier_id(id);
+
         array *ar = (array *) &table[i];
         if (!i) {
             error(11); // Undeclared identifier.
@@ -1204,9 +1223,11 @@ void statement(symset fsys) {
         gen_instruction(OPR, 0, OPR_RET); // return
     }
     else if (last_sym_read == SYM_BREAK) {
+
         if (break_code_index.is_in_loop_sign) {
             break_code_index_list pp;
             if (break_code_index.is_break_appear) {
+
                 pp = break_code_index.then;
                 while (pp->next) {
                     pp = pp->next;
@@ -1215,7 +1236,9 @@ void statement(symset fsys) {
                 pp = pp->next;
                 pp->next = NULL;
             } else {
+
                 break_code_index.is_break_appear = 1;
+
                 pp = (break_code_index_list) malloc(sizeof(struct cxlink));
                 break_code_index.then = pp;
                 pp->next = NULL;
@@ -1229,13 +1252,16 @@ void statement(symset fsys) {
                 get_next_symbol();
             }
         }
+
     }  //cy
     else if (last_sym_read == SYM_CALL) {
         get_next_symbol();
         if (last_sym_read != SYM_IDENTIFIER) {
             error(14); // There must be an identifier to follow the 'call'.
         } else {
+
             if (!(i = get_identifier_id(id))) {
+
                 error(11); // Undeclared identifier.
                 get_next_symbol();
             } else if (table[i].kind == ID_PROCEDURE) {
@@ -1310,8 +1336,10 @@ void statement(symset fsys) {
         get_next_symbol();
 
         break_code_block cxbsaved = break_code_index; //cy
+
         break_code_index.is_break_appear = 0; //cy
         break_code_index.is_in_loop_sign = 1; //cy
+
         break_code_index.then = NULL; //cy
         statement(set1);
         if (last_sym_read != SYM_SEMICOLON) {
@@ -1324,7 +1352,9 @@ void statement(symset fsys) {
                 condition(set);
                 gen_instruction(JPC, 0, cx1);
 
+
                 if (break_code_index.is_break_appear)   //cy
+
                 {
                     break_code_index_list p = break_code_index.then;
                     while (p) {
@@ -1335,9 +1365,11 @@ void statement(symset fsys) {
                     }
 
                 }
+
                 break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
                 break_code_index.then = cxbsaved.then; //cy
                 break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
+
 
             } else
                 error(31); //missing repeat
@@ -1438,14 +1470,18 @@ void statement(symset fsys) {
         }
 
         break_code_block cxbsaved = break_code_index; //cy
+
         break_code_index.is_break_appear = 0; //cy
         break_code_index.is_in_loop_sign = 1; //cy
+
         break_code_index.then = NULL; //cy
         statement(fsys);
         gen_instruction(JMP, 0, cx1);
         code[cx2].a = current_instruction_index;
         out_block(saveBlkNum, saveBlkLvl);
+
         if (break_code_index.is_break_appear)   //cy
+
         {
             break_code_index_list p = break_code_index.then;
             while (p) {
@@ -1456,9 +1492,11 @@ void statement(symset fsys) {
             }
             break_code_index.then = NULL;
         }
+
         break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
         break_code_index.then = cxbsaved.then; //cy
         break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
+
     } // while statement
     else if (last_sym_read == SYM_WRITE || last_sym_read == SYM_WRITELN){
         int saveSym = last_sym_read;
@@ -1511,6 +1549,7 @@ void statement(symset fsys) {
         //set=uniteset(set1,fsys);
         if (last_sym_read == SYM_IDENTIFIER) {
             if ((i = get_identifier_id(id)) == 0) {
+
                 error(11); //Undeclared identifier
                 get_next_symbol();
             } else {
@@ -1537,7 +1576,9 @@ void statement(symset fsys) {
         while (last_sym_read == SYM_COMMA) {
             get_next_symbol();
             if (last_sym_read == SYM_IDENTIFIER) {
+
                 if ((i = get_identifier_id(id)) == 0) {
+
                     error(11);
                     get_next_symbol();
                 } else {
@@ -1593,6 +1634,7 @@ void statement(symset fsys) {
         if (last_sym_read != SYM_IDENTIFIER)
             error(4);// id
         i = get_identifier_id(id);
+
         mk = (mask *) &table[i];
         if (i == 0)
             error(11);
@@ -2216,7 +2258,9 @@ void main(int argc, char *argv[]) {
     symset set, set1, set2;
 
     if (argc == 1)
+
         strcpy(s, "../example/for.txt");
+
     else
         strcpy(s, argv[1]);
     if ((infile = fopen(s, "r")) == NULL) {
@@ -2237,8 +2281,10 @@ void main(int argc, char *argv[]) {
     kk = MAXIDLEN;
 
     get_next_symbol();
+
     break_code_index.is_break_appear = 0; //cy
     break_code_index.is_in_loop_sign = 0; //cy
+
     break_code_index.then = NULL; //cy
     set1 = createset(SYM_PERIOD, SYM_NULL);
     set2 = uniteset(decleration_begin_sys, statement_begin_sys);
@@ -2262,7 +2308,6 @@ void main(int argc, char *argv[]) {
         list_code(0, current_instruction_index);
         interpret();
     }
-//    list_code(0, current_instruction_index);
-//    interpret();
-//    printf("OPTM=%d,	OPTM_CY=%d\n", OPTM, OPTM_CY);
+    printf("OPTM=%d,	OPTM_CY=%d\n", OPTM, OPTM_CY);
+
 }
