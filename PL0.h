@@ -12,12 +12,12 @@
 #define NRW        25     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       13     // maximum number of symbols in array ssym and csym
+#define NSYM       14    // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
-#define MAXINS   10
+#define MAXINS   12
 
 #define MAXSYM     30     // maximum number of symbols  
 #define STACKSIZE  1000   // maximum storage
@@ -75,7 +75,8 @@ enum symtype {
     SYM_SUBSUB,
     SYM_DIVEQU,
     SYM_MULEQU,
-    SYM_MODEQU
+    SYM_MODEQU,
+    SYM_COLON
 };
 
 enum idtype {
@@ -83,7 +84,7 @@ enum idtype {
 };
 
 enum opcode {
-    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD
+    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT, POP
 };
 int optime[100] =
         {
@@ -203,8 +204,8 @@ typedef struct procedure_link {
 } procedure_list;
 
 typedef struct { //cy
-    int flag;
-    int sign;
+    int is_break_appear;
+    int is_in_loop_sign;//当前break是否在某个循环中
     break_code_index_list then;
 } break_code_block; //存放break代码地址
 
@@ -228,13 +229,13 @@ int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
 
 int ssym[NSYM + 1] = {SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
                       SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
-                      SYM_LSQUARE, SYM_RSQUARE, SYM_MODEQU};
+                      SYM_LSQUARE, SYM_RSQUARE, SYM_MODEQU, SYM_COLON};
 
 char csym[NSYM + 1] = {' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';',
-                       '[', ']', '%'};
+                       '[', ']', '%', ':'};
 
 char *mnemonic[MAXINS] = {"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP",
-                          "JPC", "STA", "LAD"};
+                          "JPC", "STA", "LAD", "LMT", "POP"};
 
 typedef struct dim {
     int dim_len;
@@ -299,7 +300,7 @@ void test(symset s1, symset s2, int n);
 void enter_par();
 void modify_table(int numOfPar);
 void print_table();
-int position(char *id);
+int get_identifier_id(char *identifier);
 void const_declaration(symset fsys);
 void var_declaration(void);
 void list_code(int from, int to);

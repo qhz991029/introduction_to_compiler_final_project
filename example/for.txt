@@ -4,16 +4,14 @@ begin
   j := 2;
 end;
 begin
-  /*for i := 6 downto 1+1 do   
+  for(var i:(10,1, -1))
   begin
-      call p;
-      k := i - 2;
-      writeln(i,j,k);
-  end;*/
-  for i := 6  downto 1+1 do   
-  begin
-      call p;
-      k := i - 2;
-      writeln(i,j,k);
-  end;  
-end. 
+      write(i);
+      writeln();
+      for(var j:(1,1, 1))
+      begin
+          write(j);
+      end;
+      writeln();
+  end;
+  end.
