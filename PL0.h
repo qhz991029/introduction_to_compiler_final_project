@@ -4,12 +4,13 @@
 #include <ctype.h>
 #include "evl.h"
 #include "set.h"
+#include "jmp_table.h"
 
-#define OPTM    1
+#define OPTM    0
 #define OPTM_CY 0
 #define STEP       1
 #define MAXDIMLEN  10
-#define NRW        25     // number of reserved words
+#define NRW        27     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14    // maximum number of symbols in array ssym and csym
@@ -17,7 +18,7 @@
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
-#define MAXINS   12
+#define MAXINS   14
 
 #define MAXSYM     30     // maximum number of symbols  
 #define STACKSIZE  1000   // maximum storage
@@ -76,7 +77,9 @@ enum symtype {
     SYM_DIVEQU,
     SYM_MULEQU,
     SYM_MODEQU,
-    SYM_COLON
+    SYM_COLON,
+    SYM_SETJMP,
+    SYM_LONGJMP
 };
 
 enum idtype {
@@ -84,7 +87,7 @@ enum idtype {
 };
 
 enum opcode {
-    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT, POP
+    LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, STA, LAD, LMT, POP, STP, LTP
 };
 int optime[100] =
         {
@@ -167,16 +170,18 @@ char *err_msg[] =
                 /* 33 */"')' expected.",
                 /* 34 */"The number of segments doesn't match.",
                 /* 35 */"'break' is not the suitable place.",
-                /* 36 */"Declaration is overlap"
-                        /* 37 */"Dimension of the array must be determined."};
+                /* 36 */"Declaration is overlap",
+                /* 37 */"Dimension of the array must be determined.",
+                "'(' expected.",
+                "try to jmup to an uncalloc buf"};
 
 //////////////////////////////////////////////////////////////////////
 char last_char_read; // last character read
 int last_sym_read; // last symbol read
 char id[MAXIDLEN + 1]; // last identifier read
 int last_num_read; // last number read
-int char_count; // character count
-int line_length; // line length
+int char_count = 0; // character count
+int line_length = 0; // line length
 int kk;
 int err;
 int current_instruction_index; // index of current instruction to be generated.
@@ -219,13 +224,14 @@ char *word[NRW + 1] = {"", /* place holder */
                        "odd", "procedure", "then", "var", "while", //11
                        "write", "read", "for", "downto", "to", "else", //17
                        "writeln", "repeat", "until", "exit", "and", //22
-                       "or", "not", "break"
+                       "or", "not", "break","setjmp","longjmp"
 };
 
 int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
                      SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE,
                      SYM_READ, SYM_FOR, SYM_DOWNTO, SYM_TO, SYM_ELSE, SYM_WRITELN,
-                     SYM_REPEAT, SYM_UNTIL, SYM_EXIT, SYM_AND, SYM_OR, SYM_NOT, SYM_BREAK};
+                     SYM_REPEAT, SYM_UNTIL, SYM_EXIT, SYM_AND, SYM_OR, SYM_NOT, SYM_BREAK
+                        ,SYM_SETJMP,SYM_LONGJMP};
 
 int ssym[NSYM + 1] = {SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
                       SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
@@ -235,7 +241,7 @@ char csym[NSYM + 1] = {' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';',
                        '[', ']', '%', ':'};
 
 char *mnemonic[MAXINS] = {"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP",
-                          "JPC", "STA", "LAD", "LMT", "POP"};
+                          "JPC", "STA", "LAD", "LMT", "POP", "STP", "LTP"};
 
 typedef struct dim {
     int dim_len;
@@ -285,7 +291,9 @@ typedef struct {
     int lpl;//loop_level
     int blkNum;
 } array;
-
+jmp_state_table jmp_table;
+setjmp_point setjmp_set[MAX_JMP_BUFF+1];
+longjmp_point *longjmp_set;
 FILE *infile;
 int jdgok(int curBlkNum, int saveBlkNum);
 void print_table();

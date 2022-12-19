@@ -72,7 +72,7 @@ void getch(void) {
 } // getch
 
 void get_next_symbol(void) {
-    int , k;
+    int i, k;
     char a[MAXIDLEN + 1];
 
     while (last_char_read == ' ' || last_char_read == '\t')
@@ -227,6 +227,9 @@ void gen_instruction(int x, int y, int z) {
         printf("Fatal Error: Program too long.\n");
         exit(1);
     }
+    if (current_instruction_index < 0 ){
+        exit(0);
+    }
     code[current_instruction_index].f = x;
     code[current_instruction_index].l = y;
     code[current_instruction_index++].a = z;
@@ -294,6 +297,9 @@ void enter_obj_2_table(int kind)
 
 void test(symset s1, symset s2, int n) {
     symset s;
+    if(last_sym_read == SYM_CALL){
+        int i=1;
+    }
 
     if (!inset(last_sym_read, s1)) {
         if (n) {
@@ -711,12 +717,10 @@ void optimize_term(mask *mk, int saveCx) {
 mask *factor(symset fsys) {
     mask *mk = (mask *) malloc(sizeof(mask));
     mk->evl = create_evl(0, 0);
-    mask *expression(symset fsys);
     int i;
     symset set;
 
-    test(factor_begin_sys, fsys, 24); // The symbol can not be as the beginning of an expression.
-
+    test(factor_begin_sys, fsys, 24);// The symbol can not be as the beginning of an expression.
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
 
@@ -832,7 +836,8 @@ mask *factor(symset fsys) {
                         break;
                 }// switch
             }
-        } else if (last_sym_read == SYM_NUMBER) {
+        }
+        else if (last_sym_read == SYM_NUMBER) {
             if (last_num_read > MAXADDRESS) {
                 error(25); // The number is too great.
                 last_num_read = 0; //number????????0
@@ -841,7 +846,8 @@ mask *factor(symset fsys) {
             mk->evl = create_evl(0, 0);
             gen_instruction(LIT, 0, last_num_read);
             get_next_symbol();
-        } else if (last_sym_read == SYM_LPAREN) //(expression)
+        }
+        else if (last_sym_read == SYM_LPAREN)
         {
             get_next_symbol();
             set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
@@ -857,6 +863,44 @@ mask *factor(symset fsys) {
             } else {
                 error(22); // Missing ')'.
             }
+        }
+        else if(last_sym_read == SYM_SETJMP){
+            get_next_symbol();
+            if(last_sym_read != SYM_LPAREN){
+                error(38);
+            }
+            get_next_symbol();
+            symset set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
+            set = uniteset(set1, fsys);
+            int buf_idx = const_expression(set);
+            jmp_table.buf_status[buf_idx] = allocated;
+            setjmp_set[buf_idx].level = level;
+            if (jmp_table.is_in_condition_block == inside){
+                setjmp_set[buf_idx].stack_top_address = jmp_table.condition_stack_top_addr;
+                setjmp_set[buf_idx].return_val_address = data_alloc_index[level];
+                data_alloc_index[level]++;
+                jmp_table.total_jump_buf_num += 1;
+            }else{
+                setjmp_set[buf_idx].stack_top_address = data_alloc_index[level];
+                setjmp_set[buf_idx].return_val_address = data_alloc_index[level] + 1;
+                data_alloc_index[level] += 2;
+                jmp_table.total_jump_buf_num += 2;
+                gen_instruction(STP,level,setjmp_set[buf_idx].stack_top_address);
+            }
+            setjmp_set[buf_idx].jmp_entry_pc = jmp_table.current_jmp_entry_pc;
+            int load_ret_val_index = current_instruction_index;
+            gen_instruction(LOD,level,0);
+            code[load_ret_val_index].a = setjmp_set[buf_idx].return_val_address;
+
+            destroyset(set1);
+            destroyset(set);
+            if(last_sym_read != SYM_RPAREN){
+                error(22);
+            }
+            get_next_symbol();
+        }
+        else{
+            break;
         }
         //test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
     } // while
@@ -920,7 +964,8 @@ mask *expression(symset fsys) {
         if (addop == SYM_MINUS) {
             gen_instruction(OPR, 0, OPR_NEG);
         }
-    } else {
+    }
+    else {
         mask *mk2 = term(set);
         strcpy(mk->name, mk2->name);
         mk->evl = unite_evl(mk->evl, mk2->evl);
@@ -976,7 +1021,8 @@ void condition_factor(symset fsys) {
             } else {
                 error(22); // Missing ')'
             }
-        } else if (last_sym_read == SYM_ODD || last_sym_read == SYM_NOT) {
+        }
+        else if (last_sym_read == SYM_ODD || last_sym_read == SYM_NOT){
             int saveSym = last_sym_read;
             get_next_symbol();
             condition(fsys);
@@ -984,18 +1030,22 @@ void condition_factor(symset fsys) {
                 gen_instruction(OPR, 0, OPR_ODD);
             else
                 gen_instruction(OPR, 0, OPR_NOT);
-        } else {
+        }
+        else {
             set = uniteset(rel_set, fsys);
             expression(fsys);
             destroyset(set);
-            if (!inset(last_sym_read, rel_set)) {
+            if (!inset(last_sym_read, rel_set))
+            {
                 //error(20);
                 test(fsys, phi, 20);
-            } else {
+            }
+            else {
                 int relop = last_sym_read;
                 get_next_symbol();
                 expression(fsys);
-                switch (relop) {
+                switch (relop)
+                {
                     case SYM_EQU:
                         gen_instruction(OPR, 0, OPR_EQU);
                         break;
@@ -1083,6 +1133,7 @@ void statement(symset fsys) {
     symset set1, set;
     if (last_sym_read == SYM_IDENTIFIER){   // variable assignment
         mask *mk;
+        jmp_table.current_jmp_entry_pc = current_instruction_index;
 
         i = get_identifier_id(id);
 
@@ -1193,7 +1244,6 @@ void statement(symset fsys) {
                     gen_instruction(LIT, 0, 1);
                     gen_instruction(OPR, 0, OPR_MIN);
                     gen_instruction(STO, level - mk->level, mk->address);
-
                 } else error(13);
 
             } else {
@@ -1281,7 +1331,6 @@ void statement(symset fsys) {
                     } else {
                         int k = 0;
                         do {
-
                             if (last_sym_read == SYM_COMMA)
                                 get_next_symbol();
                             k++;
@@ -1380,6 +1429,14 @@ void statement(symset fsys) {
     else if (last_sym_read == SYM_IF) {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
+
+        jmp_table.is_in_condition_block = inside;
+        jmp_table.current_jmp_entry_pc = current_instruction_index;
+        jmp_table.total_jump_buf_num += 1;
+        jmp_table.condition_stack_top_addr = data_alloc_index[level];
+        gen_instruction(STP,level,data_alloc_index[level]);
+        data_alloc_index[level]++;
+
         get_next_symbol();
         set1 = createset(SYM_THEN, SYM_NULL); //modified by ZQ
         set = uniteset(set1, fsys);
@@ -1407,6 +1464,7 @@ void statement(symset fsys) {
         }
 
         out_block(saveBlkNum, saveBlkLvl);
+        jmp_table.is_in_condition_block = outside;
     }
     else if (last_sym_read == SYM_BEGIN)
     {
@@ -1453,6 +1511,14 @@ void statement(symset fsys) {
     {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
+
+        jmp_table.is_in_condition_block = inside;
+        jmp_table.current_jmp_entry_pc = current_instruction_index;
+        jmp_table.total_jump_buf_num += 1;
+        jmp_table.condition_stack_top_addr = data_alloc_index[level];
+        gen_instruction(STP,level,data_alloc_index[level]);
+        data_alloc_index[level]++;
+
         cx1 = current_instruction_index;
         get_next_symbol();
         set1 = createset(SYM_DO, SYM_NULL);
@@ -1497,6 +1563,7 @@ void statement(symset fsys) {
         break_code_index.then = cxbsaved.then; //cy
         break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
 
+        jmp_table.is_in_condition_block = inside;
     } // while statement
     else if (last_sym_read == SYM_WRITE || last_sym_read == SYM_WRITELN){
         int saveSym = last_sym_read;
@@ -1769,6 +1836,79 @@ void statement(symset fsys) {
         }
         out_block(saveBlkNum, saveBlkLvl);
     }
+    else if (last_sym_read == SYM_SETJMP){
+        int entry_pc = current_instruction_index;
+        jmp_table.current_jmp_entry_pc = entry_pc;
+        get_next_symbol();
+        if(last_sym_read != SYM_LPAREN){
+            error(38);
+        }
+        get_next_symbol();
+        set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
+        set = uniteset(set1, fsys);
+        int buf_idx = const_expression(set);
+        //为跳转分配的空间+2，用来储存该跳跃点的返回值栈顶
+        jmp_table.total_jump_buf_num += 2;
+        jmp_table.buf_status[buf_idx] = allocated;
+
+        setjmp_point *new_jmp = &setjmp_set[buf_idx];
+        new_jmp->level = level;
+        new_jmp->return_val_address = data_alloc_index[level];
+        new_jmp->stack_top_address = data_alloc_index[level] + 1;
+        new_jmp->jmp_entry_pc = entry_pc;
+        data_alloc_index[level] += 2;
+
+        gen_instruction(STP,level,new_jmp->stack_top_address);
+        gen_instruction(LOD,level,new_jmp->return_val_address);
+
+        destroyset(set1);
+        destroyset(set);
+        if(last_sym_read != SYM_RPAREN){
+            error(33);
+        }
+        get_next_symbol();
+    }
+    else if (last_sym_read == SYM_LONGJMP){
+        get_next_symbol();
+        if(last_sym_read != SYM_LPAREN){
+            error(38);
+        }
+        get_next_symbol();
+        set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
+        set = uniteset(set1, fsys);
+        int buf_idx = const_expression(set);
+        destroyset(set1);
+        destroyset(set);
+        if(last_sym_read != SYM_COMMA){
+            error(5);
+        }
+        get_next_symbol();
+        set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
+        set = uniteset(set1, fsys);
+        int return_val = const_expression(set);
+        destroyset(set1);
+        destroyset(set);
+
+        longjmp_point * new_longjmp = (longjmp_point *) malloc(sizeof (longjmp_point));
+        new_longjmp->next = longjmp_set;
+        longjmp_set = new_longjmp;
+        new_longjmp->jmp_buf_id = buf_idx;
+        new_longjmp->return_value = return_val;
+        gen_instruction(LIT,0,return_val);
+        new_longjmp->save_return_value_pc = current_instruction_index;
+
+        gen_instruction(STO,0,0);
+        new_longjmp->load_stack_top_pc = current_instruction_index;
+        gen_instruction(LTP,0,0);
+        new_longjmp->jmp_pc = current_instruction_index;
+        gen_instruction(JMP,0,0);
+
+        if(last_sym_read != SYM_RPAREN){
+            error(33);
+        }
+        get_next_symbol();
+
+    }
     test(fsys, phi, 19);
 } // statement
 
@@ -2033,14 +2173,21 @@ void block(symset fsys) {
     else
         mk->numOfPar = zx[level - 1];
     cx0 = current_instruction_index; //procedure enter_obj_2_table address
+
+    jmp_table.current_level_alloc_pc = current_instruction_index;
     gen_instruction(INT, 0, data_alloc_index[level]);
+
+    jmp_table.total_jump_buf_num = 0;
+
     set1 = createset(SYM_SEMICOLON, SYM_END, SYM_NULL);
     set = uniteset(set1, fsys);
     statement(set);
     destroyset(set1);
     destroyset(set);
-
     code[cx0].a = data_alloc_index[level];
+    code[jmp_table.current_level_alloc_pc].a += jmp_table.total_jump_buf_num;
+
+    jmp_table.total_jump_buf_num = 0;
 
     if (OPTM_CY) {
         var_num = data_alloc_index[level] - 2;
@@ -2078,8 +2225,8 @@ void block(symset fsys) {
 
     gen_instruction(OPR, 0, OPR_RET); // return
     test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
-    list_code(cx0, current_instruction_index);
-    print_table();
+    //list_code(cx0, current_instruction_index);
+    //print_table();
 
     out_block(saveBlkNum, saveBlkLvl);
 } // block
@@ -2101,7 +2248,10 @@ void interpret() {
     instruction i; // instruction register
 
     printf("Begin executing PL/0 program.\n");
-
+    int j=0;
+    for(j=0;j<STACKSIZE;++j){
+        stack[j] = 0;
+    }
     pc = 0;
     b = 1;
     top = 3;
@@ -2243,7 +2393,12 @@ void interpret() {
             case POP:
                 top--;
                 break;
-
+            case LTP://加载栈顶
+                top = stack[get_base_addr(stack, b, i.l) + i.a];
+                break;
+            case STP://保存栈顶
+                stack[get_base_addr(stack, b, i.l) + i.a] = top;
+                break;
         } // switch
     } while (pc);
 
@@ -2259,7 +2414,7 @@ void main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/for.txt");
+        strcpy(s, "../example/setjmp.txt");
 
     else
         strcpy(s, argv[1]);
@@ -2273,8 +2428,8 @@ void main(int argc, char *argv[]) {
 
     // create begin symbol sets
     decleration_begin_sys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
-    statement_begin_sys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
-    factor_begin_sys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_NULL);
+    statement_begin_sys = createset(SYM_SETJMP, SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
+    factor_begin_sys = createset( SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_SETJMP, SYM_NULL);
 
     err = char_count = current_instruction_index = line_length = 0; // initialize global variables
     last_char_read = ' ';
@@ -2284,6 +2439,16 @@ void main(int argc, char *argv[]) {
 
     break_code_index.is_break_appear = 0; //cy
     break_code_index.is_in_loop_sign = 0; //cy
+
+    int p=0;
+    for(p=1;p<=MAX_JMP_BUFF;++p){
+        jmp_table.buf_status[p] = unallocated;
+    }
+    jmp_table.is_in_condition_block = outside;
+    jmp_table.total_jump_buf_num = 0;
+    jmp_table.current_jmp_entry_pc = -1;
+    longjmp_set = (longjmp_point *) malloc(sizeof (longjmp_point));
+    longjmp_set->next = NULL;
 
     break_code_index.then = NULL; //cy
     set1 = createset(SYM_PERIOD, SYM_NULL);
@@ -2298,6 +2463,26 @@ void main(int argc, char *argv[]) {
     destroyset(decleration_begin_sys);
     destroyset(statement_begin_sys);
     destroyset(factor_begin_sys);
+
+
+
+    longjmp_point * j_point;
+    j_point =longjmp_set;
+    int buf_id;
+    while(j_point->next != NULL){
+        buf_id = j_point->jmp_buf_id;
+        if(jmp_table.buf_status[buf_id] == unallocated){
+            error(39);
+        }else{
+            code[j_point->save_return_value_pc].l = setjmp_set[buf_id].level;
+            code[j_point->load_stack_top_pc].l = setjmp_set[buf_id].level;
+            code[j_point->save_return_value_pc].a = setjmp_set[buf_id].return_val_address;
+            code[j_point->load_stack_top_pc].a = setjmp_set[buf_id].stack_top_address;
+            code[j_point->jmp_pc].a = setjmp_set[j_point->jmp_buf_id].jmp_entry_pc;
+        }
+        j_point = j_point->next;
+    }
+
 
     if (last_sym_read != SYM_PERIOD)
         error(9); // '.' expected.
