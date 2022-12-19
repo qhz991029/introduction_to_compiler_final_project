@@ -3,6 +3,7 @@
 #pragma warning(disable:4996)
 #include "PL0.h"
 #include "set.h"
+#include "print.h"
 
 int data_alloc_index[MAXLEVEL]; // data allocation index
 int zx[MAXLEVEL];
@@ -63,10 +64,12 @@ void getch(void) {
         while ((!feof(infile)) // added & modified by alex 01-02-09
                && ((last_char_read = getc(infile)) != '\n')) {
             printf("%c", last_char_read);
-            line[++line_length] = last_char_read;
+            line[++line_length] = last_char_read; // 从第二个位置开始存放
         } // while
         printf("\n");
         line[++line_length] = ' ';
+        line[line_length + 1] = '\0';
+        print_to_write(line, &line_length);
     }
     last_char_read = line[++char_count];
 } // getch
@@ -2259,7 +2262,7 @@ void main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/for.txt");
+        strcpy(s, "./example/for.txt");
 
     else
         strcpy(s, argv[1]);

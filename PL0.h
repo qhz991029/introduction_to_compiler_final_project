@@ -210,7 +210,7 @@ typedef struct { //cy
 } break_code_block; //存放break代码地址
 
 break_code_block break_code_index;
-char line[80];
+char line[200];
 
 instruction code[CXMAX];
 

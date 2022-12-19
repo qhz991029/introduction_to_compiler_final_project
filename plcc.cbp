@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="plcc"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="plcc">
+				<Option output="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/plcc" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir=""/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 plcc"/>
+					<CompileFile command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="plcc/fast">
+				<Option output="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/plcc" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir=""/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 plcc/fast"/>
+					<CompileFile command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -f &quot;/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/PL0.c">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/PL0.h">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/evl.c">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/evl.h">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/print.cpp">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/print.h">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/set.c">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/set.h">
+			<Option target="plcc"/>
+		</Unit>
+		<Unit filename="/home/huaizhi_qu/workspace/introduction_to_compiler/final_project/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -1,0 +1,10 @@
+.idea/
+cmake-build-debug/
+cmake*/
+.cmake/
+.vscode/
+Testing/
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+Makefile
