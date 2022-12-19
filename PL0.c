@@ -72,7 +72,7 @@ void getch(void) {
 } // getch
 
 void get_next_symbol(void) {
-    int , k;
+    int i, k;
     char a[MAXIDLEN + 1];
 
     while (last_char_read == ' ' || last_char_read == '\t')

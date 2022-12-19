@@ -8,7 +8,7 @@ begin
   begin
       write(i);
       writeln();
-      for(var j:(1,1, 1))
+      for(var j:(1,2, 1))
       begin
           write(j);
       end;
