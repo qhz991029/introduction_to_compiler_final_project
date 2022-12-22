@@ -1,13 +1,18 @@
-var i,j;
+var i;
+
 begin
-  i := 2;
-  j := 2;
-  if i > 3 then
-    j := 2
-  else
-  begin
-   if i < 3 then
-    j := 1;
-  end;
-  writeln(j);
+	i := 0;
+	if (i = 0) then
+	begin
+		print(0);
+		print(1)
+	end
+	else begin
+		if (i = 1) then
+			print(1)
+		else begin
+			print(2);
+			print(3)
+		end
+	end
 end.
