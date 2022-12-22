@@ -885,14 +885,14 @@ mask *factor(symset fsys) {
                 jmp_table.total_jump_buf_num += 1;
             }else{
                 setjmp_set[buf_idx].stack_top_address = data_alloc_index[level];
-                setjmp_set[buf_idx].return_val_address = data_alloc_index[level] + 1;
-                data_alloc_index[level] += 2;
-                jmp_table.total_jump_buf_num += 2;
-                gen_instruction(STP,level,setjmp_set[buf_idx].stack_top_address);
+                setjmp_set[buf_idx].return_val_address = data_alloc_index[level] + 2;
+                data_alloc_index[level] += 3;
+                jmp_table.total_jump_buf_num += 3;
+                gen_instruction(STP,0,setjmp_set[buf_idx].stack_top_address);
             }
             setjmp_set[buf_idx].jmp_entry_pc = jmp_table.current_jmp_entry_pc;
             int load_ret_val_index = current_instruction_index;
-            gen_instruction(LOD,level,0);
+            gen_instruction(LOD,0,0);
             code[load_ret_val_index].a = setjmp_set[buf_idx].return_val_address;
 
             destroyset(set1);
@@ -1435,10 +1435,10 @@ void statement(symset fsys) {
 
         jmp_table.is_in_condition_block = inside;
         jmp_table.current_jmp_entry_pc = current_instruction_index;
-        jmp_table.total_jump_buf_num += 1;
+        jmp_table.total_jump_buf_num += 2;//done
         jmp_table.condition_stack_top_addr = data_alloc_index[level];
         gen_instruction(STP,level,data_alloc_index[level]);
-        data_alloc_index[level]++;
+        data_alloc_index[level] += 2;
 
         get_next_symbol();
         set1 = createset(SYM_THEN, SYM_NULL); //modified by ZQ
@@ -1517,10 +1517,10 @@ void statement(symset fsys) {
 
         jmp_table.is_in_condition_block = inside;
         jmp_table.current_jmp_entry_pc = current_instruction_index;
-        jmp_table.total_jump_buf_num += 1;
+        jmp_table.total_jump_buf_num += 2;//done
         jmp_table.condition_stack_top_addr = data_alloc_index[level];
         gen_instruction(STP,level,data_alloc_index[level]);
-        data_alloc_index[level]++;
+        data_alloc_index[level] += 2;
 
         cx1 = current_instruction_index;
         get_next_symbol();
@@ -1851,18 +1851,18 @@ void statement(symset fsys) {
         set = uniteset(set1, fsys);
         int buf_idx = const_expression(set);
         //为跳转分配的空间+2，用来储存该跳跃点的返回值栈顶
-        jmp_table.total_jump_buf_num += 2;
+        jmp_table.total_jump_buf_num += 3;//done
         jmp_table.buf_status[buf_idx] = allocated;
 
         setjmp_point *new_jmp = &setjmp_set[buf_idx];
         new_jmp->level = level;
-        new_jmp->return_val_address = data_alloc_index[level];
-        new_jmp->stack_top_address = data_alloc_index[level] + 1;
+        new_jmp->return_val_address = data_alloc_index[level] + 2;
+        new_jmp->stack_top_address = data_alloc_index[level];
         new_jmp->jmp_entry_pc = entry_pc;
         data_alloc_index[level] += 2;
 
-        gen_instruction(STP,level,new_jmp->stack_top_address);
-        gen_instruction(LOD,level,new_jmp->return_val_address);
+        gen_instruction(STP,0,new_jmp->stack_top_address);
+        gen_instruction(LOD,0,new_jmp->return_val_address);
 
         destroyset(set1);
         destroyset(set);
@@ -1897,6 +1897,7 @@ void statement(symset fsys) {
         longjmp_set = new_longjmp;
         new_longjmp->jmp_buf_id = buf_idx;
         new_longjmp->return_value = return_val;
+        new_longjmp->jmp_level = level;
         gen_instruction(LIT,0,return_val);
         new_longjmp->save_return_value_pc = current_instruction_index;
 
@@ -2259,6 +2260,7 @@ void interpret() {
     b = 1;
     top = 3;
     stack[1] = stack[2] = stack[3] = 0;
+
     do {
         i = code[pc++];
         switch (i.f) {
@@ -2398,9 +2400,11 @@ void interpret() {
                 break;
             case LTP://加载栈顶
                 top = stack[get_base_addr(stack, b, i.l) + i.a];
+                b = stack[get_base_addr(stack, b, i.l) + i.a + 1];
                 break;
             case STP://保存栈顶
                 stack[get_base_addr(stack, b, i.l) + i.a] = top;
+                stack[get_base_addr(stack, b, i.l) + i.a + 1] = b;
                 break;
         } // switch
     } while (pc);
@@ -2408,7 +2412,7 @@ void interpret() {
     printf("End executing PL/0 program.\n");
 } // interpret
 
-void main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
     FILE *hbin;
     FILE *hasm;
     char s[80];
@@ -2477,8 +2481,8 @@ void main(int argc, char *argv[]) {
         if(jmp_table.buf_status[buf_id] == unallocated){
             error(39);
         }else{
-            code[j_point->save_return_value_pc].l = setjmp_set[buf_id].level;
-            code[j_point->load_stack_top_pc].l = setjmp_set[buf_id].level;
+            code[j_point->save_return_value_pc].l = j_point->jmp_level - setjmp_set[buf_id].level;
+            code[j_point->load_stack_top_pc].l = j_point->jmp_level - setjmp_set[buf_id].level;
             code[j_point->save_return_value_pc].a = setjmp_set[buf_id].return_val_address;
             code[j_point->load_stack_top_pc].a = setjmp_set[buf_id].stack_top_address;
             code[j_point->jmp_pc].a = setjmp_set[j_point->jmp_buf_id].jmp_entry_pc;

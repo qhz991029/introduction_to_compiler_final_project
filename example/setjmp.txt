@@ -1,28 +1,31 @@
-var result,i,j;
-procedure banana;
-    begin
-        write(1);
-        longjmp(1,2);
-        write(2000);
-    end;
-procedure apple;
-    begin
-        write(2);
-        longjmp(2,12);
-        write(2000);
-    end;
-begin
-    j:=100;
-    if setjmp(2) = 0 then
-        call apple
-    else
-        write(23);
+var result,i;
 
-    i:=setjmp(1);
-    write(i);
-    writeln();
-    if i=0 then
-        call banana
-    else
-        write(i)
+procedure banana;
+
+	procedure apple;
+	begin
+		print(1000);
+		longjmp(1,2);
+		print(2000);
+	end;
+
+begin
+	for(var i:(0,10))
+	   begin
+	    call apple;
+	   end;
+end;
+
+begin
+	result := setjmp(1);
+	if (result = 1) then
+		print(1111)
+	else begin
+		if (result = 2) then
+			print(2222)
+		else begin
+			print(999);
+			call banana;
+		end
+	end
 end.
