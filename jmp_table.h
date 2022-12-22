@@ -41,6 +41,7 @@ typedef struct longjmp_point{
     int load_stack_top_pc;
     int save_return_value_pc;
     int jmp_pc;
+    int jmp_level;
     struct longjmp_point* next;
 }longjmp_point;
 
