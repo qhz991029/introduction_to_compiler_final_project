@@ -9,15 +9,6 @@ int zx[MAXLEVEL];
 
 void in_block() {
     block_num = block_num * 10 + block_level_count[block_level];
-    /*
-    if (block_num==101111) {
-        int kk;
-        kk=1;
-        print_table();
-    }
-    */
-
-//    printf("blk_num=%d\n",block_num);
     block_level_count[block_level]++;
     block_level++;
     block_level_count[block_level] = 0;
@@ -26,7 +17,6 @@ void in_block() {
 void out_block(int saveBlkNum, int saveBlkLvl) {
     block_level = saveBlkLvl;
     block_num = saveBlkNum;
-//	printf("blk_num=%d\n",block_num);
 }
 
 void error(int n) {
@@ -221,9 +211,9 @@ void gen_instruction(int x, int y, int z) {
     if (current_instruction_index < 0 ){
         exit(0);
     }
-    code[current_instruction_index].f = x;
-    code[current_instruction_index].l = y;
-    code[current_instruction_index++].a = z;
+    code[current_instruction_index].func = x;
+    code[current_instruction_index].level = y;
+    code[current_instruction_index++].addr = z;
 } // gen
 
 // enter_obj_2_table object(constant, variable or procedre) into table.
@@ -246,7 +236,6 @@ void enter_obj_2_table(int kind)
     table[tx].cnt = 0;  //zq
     table[tx].lpl = loop_level; //
     table[tx].blkNum = block_num;
-    table[tx].quote = 0; //cy_quote
     switch (kind) {
         case ID_CONSTANT:
             if (last_num_read > MAXADDRESS) {
@@ -311,7 +300,6 @@ void enter_par() {
     mk = (mask *) &table[tx];
     mk->level = level + 1; //differences
     mk->address = zx[level]++; //differences
-    mk->quote = 1;
 }
 
 void modify_table(int numOfPar) {
@@ -331,12 +319,6 @@ int get_identifier_id(char *identifier) {
 
     mask *mk = (mask *) &table[i];
     array *ar = (array *) &table[i];
-    if (mk->level == level)   //cy_quote
-    {
-        table[i].quote = 1;
-    } else
-        table[i].quote = 2;
-
     return i;
 } // position
 
@@ -350,8 +332,8 @@ void const_declaration(symset fsys) {
             if (last_sym_read == SYM_BECOMES)
                 error(1); // Found ':=' when expecting '='.
             get_next_symbol();
-            last_num_read = const_expression(
-                    uniteset(fsys, createset(SYM_COMMA, SYM_SEMICOLON, SYM_NULL)));
+            last_num_read = last_num_read;
+            get_next_symbol();
             strcpy(id, idsaved);
             enter_obj_2_table(ID_CONSTANT);
         } else {
@@ -387,129 +369,14 @@ void list_code(int from, int to) {
 
     printf("\n");
     for (i = from; i < to; i++) {
-        printf("%5d %s\t%d\t%d\n", i, mnemonic[code[i].f], code[i].l,
-               code[i].a);
+        printf("%5d %s\t%d\t%d\n", i, mnemonic[code[i].func], code[i].level,
+               code[i].addr);
     }
     printf("\n");
 } // list_code
 
-int const_factor(symset fsys) {
-    int i;
-    int n;
-    symset set;
-    test(factor_begin_sys, fsys, 24); // The symbol can not be as the beginning of an expression.
-    while (inset(last_sym_read, factor_begin_sys)) {
-        if (last_sym_read == SYM_IDENTIFIER) {
-
-            if ((i = get_identifier_id(id)) == 0) {
-
-                error(11); // Undeclared identifier.
-                get_next_symbol();
-            } else {
-                array *ar = (array *) &table[i];
-
-                switch (table[i].kind) {
-                    mask *mk;
-                    case ID_CONSTANT:
-                        n = table[i].value;
-                        get_next_symbol();
-                        break;
-                    case ID_VARIABLE:
-                        error(37);
-                        get_next_symbol();
-                        break;
-                    case ID_PROCEDURE:
-                        error(21); // Procedure identifier can not be in an expression.
-                        get_next_symbol();
-                        break;
-                    default:
-                        error(37);
-                        break;
-                } // switch
-            }
-        } else if (last_sym_read == SYM_NUMBER) {
-            if (last_num_read > MAXADDRESS) {
-                error(25); // The number is too great.
-                last_num_read = 0; //number̫����ֱ�Ӹ�ֵΪ0
-            }
-            n = last_num_read;
-            get_next_symbol();
-        } else if (last_sym_read == SYM_LPAREN){
-            get_next_symbol();
-            set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
-            n = const_expression(set);
-            destroyset(set);
-            if (last_sym_read == SYM_RPAREN) {
-                get_next_symbol();
-            } else {
-                error(22); // Missing ')'.
-            }
-
-        } else if (last_sym_read == SYM_MINUS) {
-            get_next_symbol();
-            n = const_factor(factor_begin_sys) * (-1);
-            destroyset(set);
-
-        }
-    } // while
-    return n;
-} // factor
-
-int const_term(symset fsys) {
-    int mulop;
-    symset set;
-
-    set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_NULL));
-    int n1 = const_factor(set);
-    int n = n1;
-    while (last_sym_read == SYM_TIMES || last_sym_read == SYM_SLASH) {
-        mulop = last_sym_read;
-        get_next_symbol();
-        int n2 = const_factor(set);
-        if (mulop == SYM_TIMES) {
-            n1 = n1 * n2;
-        } else {
-            n1 = n1 / n2;
-        }
-    } // while
-    destroyset(set);
-    return n1;
-} // term
-
-int const_expression(symset fsys) {
-    int addop;
-    symset set;
-    int n = 0;
-    set = uniteset(fsys, createset(SYM_PLUS, SYM_MINUS, SYM_NULL));
-    if (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
-        addop = last_sym_read;
-        get_next_symbol();
-        n = const_term(set);
-        if (addop == SYM_MINUS) {
-            n = -n;
-        }
-    } else {
-        n = const_term(set);
-    }
-
-    while (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
-        addop = last_sym_read;
-        get_next_symbol();
-        int n1 = const_term(set);
-        if (addop == SYM_PLUS) {
-            n = n + n1;
-        } else {
-            n = n - n1;
-        }
-    } // while
-
-    destroyset(set);
-    return n;
-} // expression
-int sx = 0;
 void dim_declaration(void) {
     char idsaved[MAXIDLEN + 1] = {'\0'};
-    int constexpre(symset fsys);
     strcpy(idsaved, id);
     dim = 0; //��ʼ��
     array_size = 1; //��ʼ��
@@ -524,7 +391,8 @@ void dim_declaration(void) {
 //         error(26); //lack last_num_read
 //         }
         symset set = createset(SYM_RSQUARE, SYM_NULL);
-        int nn = const_expression(set);
+        int nn = last_num_read;
+        get_next_symbol();
         latit[dim++] = nn;
         destroyset(set);
         array_size *= nn;
@@ -550,7 +418,7 @@ void dim_declaration(void) {
 //     printf("\n");
 }
 // tests if error occurs and skips all symbols that do not belongs to s1 or s2.
-mask *factor(symset fsys) {
+void factor(symset fsys) {
     int i;
     symset set;
 
@@ -764,7 +632,8 @@ mask *factor(symset fsys) {
             get_next_symbol();
             symset set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
             set = uniteset(set1, fsys);
-            int buf_idx = const_expression(set);
+            int buf_idx = last_num_read;
+            get_next_symbol();
             jmp_table.buf_status[buf_idx] = allocated;
             setjmp_set[buf_idx].level = level;
             if (jmp_table.is_in_condition_block == inside){
@@ -782,7 +651,7 @@ mask *factor(symset fsys) {
             setjmp_set[buf_idx].jmp_entry_pc = jmp_table.current_jmp_entry_pc;
             int load_ret_val_index = current_instruction_index;
             gen_instruction(LOD,0,0);
-            code[load_ret_val_index].a = setjmp_set[buf_idx].return_val_address;
+            code[load_ret_val_index].addr = setjmp_set[buf_idx].return_val_address;
 
             destroyset(set1);
             destroyset(set);
@@ -798,18 +667,18 @@ mask *factor(symset fsys) {
     } // while
 } // factor
 
-mask *term(symset fsys) {
+void term(symset fsys) {
     int saveCx = current_instruction_index;
     int mulop;
     symset set;
 
     set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_NULL));
 
-    mask *mk2 = factor(set);
+    factor(set);
     while (last_sym_read == SYM_TIMES || last_sym_read == SYM_SLASH) {
         mulop = last_sym_read;
         get_next_symbol();
-        mask *mk2 = factor(set);
+        factor(set);
         if (mulop == SYM_TIMES) {
             gen_instruction(OPR, 0, OPR_MUL);
         } else {
@@ -819,7 +688,7 @@ mask *term(symset fsys) {
     destroyset(set);
 } // term
 
-mask *expression(symset fsys) {
+void expression(symset fsys) {
     int saveCx = current_instruction_index;
     int addop;
     symset set;
@@ -828,18 +697,18 @@ mask *expression(symset fsys) {
     if (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
         addop = last_sym_read;
         get_next_symbol();
-        mask *mk2 = term(set);
+        term(set);
         if (addop == SYM_MINUS) {
             gen_instruction(OPR, 0, OPR_NEG);
         }
     }
     else {
-        mask *mk2 = term(set);
+        term(set);
     }
     while (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
         addop = last_sym_read;
         get_next_symbol();
-        mask *mk2 = term(set);
+        term(set);
         if (addop == SYM_PLUS) {
             gen_instruction(OPR, 0, OPR_ADD);
         } else {
@@ -1035,53 +904,6 @@ void statement(symset fsys) {
             }
         }
     } // if sym==SYM_IDENTIFIER
-    else if (last_sym_read == SYM_EXIT) {
-        get_next_symbol();
-        if (last_sym_read == SYM_LPAREN) {
-            get_next_symbol();
-            expression(uniteset(fsys, createset(SYM_RPAREN, SYM_NULL)));
-            //gen(STO,1,dx[level-1]-1);
-            gen_instruction(STO, 0, -zx[level - 1]); //////////////////
-            if (last_sym_read == SYM_RPAREN) {
-                get_next_symbol();
-            } else {
-                error(22);
-            }
-        }
-        gen_instruction(OPR, 0, OPR_RET); // return
-    }
-    else if (last_sym_read == SYM_BREAK) {
-
-        if (break_code_index.is_in_loop_sign) {
-            break_code_index_list pp;
-            if (break_code_index.is_break_appear) {
-
-                pp = break_code_index.then;
-                while (pp->next) {
-                    pp = pp->next;
-                }
-                pp->next = (break_code_index_list) malloc(sizeof(struct cxlink));
-                pp = pp->next;
-                pp->next = NULL;
-            } else {
-
-                break_code_index.is_break_appear = 1;
-
-                pp = (break_code_index_list) malloc(sizeof(struct cxlink));
-                break_code_index.then = pp;
-                pp->next = NULL;
-            }
-            pp->break_code_index = current_instruction_index;
-            gen_instruction(JMP, 0, 0);
-            get_next_symbol();
-        } else {
-            error(35);
-            if (last_sym_read == SYM_SEMICOLON) {
-                get_next_symbol();
-            }
-        }
-
-    }  //cy
     else if (last_sym_read == SYM_CALL) {
         get_next_symbol();
         if (last_sym_read != SYM_IDENTIFIER) {
@@ -1154,56 +976,6 @@ void statement(symset fsys) {
         }
 
     }  // procedure call
-    else if (last_sym_read == SYM_REPEAT) {
-        int saveBlkNum = block_num;
-        int saveBlkLvl = block_level;
-        set1 = createset(SYM_UNTIL, SYM_SEMICOLON, SYM_NULL);
-        set = uniteset(set1, fsys);
-        cx1 = current_instruction_index;
-        get_next_symbol();
-
-        break_code_block cxbsaved = break_code_index; //cy
-
-        break_code_index.is_break_appear = 0; //cy
-        break_code_index.is_in_loop_sign = 1; //cy
-
-        break_code_index.then = NULL; //cy
-        statement(set1);
-        if (last_sym_read != SYM_SEMICOLON) {
-            error(10); // "';' expected."
-        } else {
-            get_next_symbol();
-            if (last_sym_read == SYM_UNTIL) {
-                get_next_symbol();
-
-                condition(set);
-                gen_instruction(JPC, 0, cx1);
-
-
-                if (break_code_index.is_break_appear)   //cy
-
-                {
-                    break_code_index_list p = break_code_index.then;
-                    while (p) {
-                        code[p->break_code_index].a = current_instruction_index;
-                        break_code_index_list q = p;
-                        free(p);
-                        p = q->next;
-                    }
-
-                }
-
-                break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
-                break_code_index.then = cxbsaved.then; //cy
-                break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
-
-
-            } else
-                error(31); //missing repeat
-
-            out_block(saveBlkNum, saveBlkLvl);
-        }
-    }
     else if (last_sym_read == SYM_IF) {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
@@ -1234,11 +1006,11 @@ void statement(symset fsys) {
             cx2 = current_instruction_index;
             gen_instruction(JMP, 0, 0);
             get_next_symbol();
-            code[cx1].a = current_instruction_index;
+            code[cx1].addr = current_instruction_index;
             statement(fsys);
-            code[cx2].a = current_instruction_index;
+            code[cx2].addr = current_instruction_index;
         } else {
-            code[cx1].a = current_instruction_index;
+            code[cx1].addr = current_instruction_index;
         }
 
         out_block(saveBlkNum, saveBlkLvl);
@@ -1312,34 +1084,10 @@ void statement(symset fsys) {
         } else {
             error(18); // 'do' expected.
         }
-
-        break_code_block cxbsaved = break_code_index; //cy
-
-        break_code_index.is_break_appear = 0; //cy
-        break_code_index.is_in_loop_sign = 1; //cy
-
-        break_code_index.then = NULL; //cy
         statement(fsys);
         gen_instruction(JMP, 0, cx1);
-        code[cx2].a = current_instruction_index;
+        code[cx2].addr = current_instruction_index;
         out_block(saveBlkNum, saveBlkLvl);
-
-        if (break_code_index.is_break_appear)   //cy
-
-        {
-            break_code_index_list p = break_code_index.then;
-            while (p) {
-                code[p->break_code_index].a = current_instruction_index;
-                break_code_index_list q = p;
-                //free(p);
-                p = q->next;
-            }
-            break_code_index.then = NULL;
-        }
-
-        break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
-        break_code_index.then = cxbsaved.then; //cy
-        break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
 
         jmp_table.is_in_condition_block = inside;
     } // while statement
@@ -1383,88 +1131,10 @@ void statement(symset fsys) {
         }
 
     } //added by zq
-    else if (last_sym_read == SYM_READ){
-        get_next_symbol();
-        if (last_sym_read == SYM_LPAREN) {
-            get_next_symbol();
-        } else {
-            error(33); //'(' expected
-        }
-        //set1=createset(SYM_COMMA,SYM_PAREN,SYM_NULL);
-        //set=uniteset(set1,fsys);
-        if (last_sym_read == SYM_IDENTIFIER) {
-            if ((i = get_identifier_id(id)) == 0) {
-
-                error(11); //Undeclared identifier
-                get_next_symbol();
-            } else {
-                switch (table[i].kind) {
-                    mask *mk;
-                    case ID_CONSTANT:
-                        error(12); //Illegal assignment
-                        break;
-                    case ID_PROCEDURE:
-                        error(12);
-                        break;
-                    case ID_VARIABLE:
-                        mk = (mask *) &table[i];
-                        gen_instruction(OPR, 0, OPR_RED);
-                        gen_instruction(STO, level - mk->level, mk->address);
-                        mk->cnt++;
-                        break;
-                }
-            }
-        } else {
-            error(19); //incorrect symbol
-        }
-        get_next_symbol();
-        while (last_sym_read == SYM_COMMA) {
-            get_next_symbol();
-            if (last_sym_read == SYM_IDENTIFIER) {
-
-                if ((i = get_identifier_id(id)) == 0) {
-
-                    error(11);
-                    get_next_symbol();
-                } else {
-                    switch (table[i].kind) {
-                        mask *mk;
-                        case ID_CONSTANT:
-                            error(12);
-                            break;
-                        case ID_PROCEDURE:
-                            error(12);
-                            break;
-                        case ID_VARIABLE:
-                            mk = (mask *) &table[i];
-                            gen_instruction(OPR, 0, OPR_RED);
-                            gen_instruction(STO, level - mk->level, mk->address);
-                            mk->cnt++;
-                            break;
-
-                    }
-                }
-            } else {
-                error(19);
-            }
-            get_next_symbol();
-        }
-
-        if (last_sym_read == SYM_RPAREN) {
-            get_next_symbol();
-        } else {
-            error(22); //"Missing ')'."
-        }
-
-    }
     else if (last_sym_read == SYM_FOR) {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
         in_block();
-        break_code_block cxbsaved = break_code_index; //cy
-        break_code_index.is_break_appear = 0;
-        break_code_index.is_in_loop_sign = 1;
-        break_code_index.then = NULL;
         // for ( var id:(
         get_next_symbol();
         mask *mk;
@@ -1538,7 +1208,7 @@ void statement(symset fsys) {
             gen_instruction(POP,0,0);
             int end_j = current_instruction_index;
             gen_instruction(JMP,0,0);
-            code[first_equal_jmp].a = current_instruction_index;
+            code[first_equal_jmp].addr = current_instruction_index;
             gen_instruction(OPR,0,OPR_LES);
             int loop_step;
             int is_step_expression = 0;
@@ -1604,16 +1274,16 @@ void statement(symset fsys) {
                 gen_instruction(POP,0,0);
                 int end_jump = current_instruction_index;
                 gen_instruction(JMP,0,0);
-                code[equal_jmp].a = current_instruction_index;
+                code[equal_jmp].addr = current_instruction_index;
                 gen_instruction(OPR, 0, OPR_LEQ);//A<=B?
                 gen_instruction(LMT,0,1);//Entry A<B?
                 gen_instruction(OPR,0,OPR_NEQ);
                 int final_jump_point = current_instruction_index;
                 gen_instruction(JPC,0,0);
                 int out_code_index = current_instruction_index;
-                code[final_jump_point].a = for_loop_entry;
-                code[end_jump].a = current_instruction_index;
-                code[end_j].a = current_instruction_index;
+                code[final_jump_point].addr = for_loop_entry;
+                code[end_jump].addr = current_instruction_index;
+                code[end_j].addr = current_instruction_index;
                 gen_instruction(POP,0,0);
             }else{
                 error(0);//TODO:missing )
@@ -1633,7 +1303,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int buf_idx = const_expression(set);
+        int buf_idx = last_num_read;
+        get_next_symbol();
         //为跳转分配的空间+2，用来储存该跳跃点的返回值栈顶
         jmp_table.total_jump_buf_num += 3;//done
         jmp_table.buf_status[buf_idx] = allocated;
@@ -1663,7 +1334,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int buf_idx = const_expression(set);
+        int buf_idx = last_num_read;
+        get_next_symbol();
         destroyset(set1);
         destroyset(set);
         if(last_sym_read != SYM_COMMA){
@@ -1672,7 +1344,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int return_val = const_expression(set);
+        int return_val = last_num_read;
+        get_next_symbol();
         destroyset(set1);
         destroyset(set);
 
@@ -1846,7 +1519,7 @@ void block(symset fsys) {
         destroyset(set);
     } while (inset(last_sym_read, decleration_begin_sys));
 
-    code[mk->address].a = current_instruction_index;
+    code[mk->address].addr = current_instruction_index;
     mk->address = current_instruction_index;
     if (level == 0)
         mk->numOfPar = zx[level]; //added by zq
@@ -1864,8 +1537,8 @@ void block(symset fsys) {
     statement(set);
     destroyset(set1);
     destroyset(set);
-    code[cx0].a = data_alloc_index[level];
-    code[jmp_table.current_level_alloc_pc].a += jmp_table.total_jump_buf_num;
+    code[cx0].addr = data_alloc_index[level];
+    code[jmp_table.current_level_alloc_pc].addr += jmp_table.total_jump_buf_num;
 
     jmp_table.total_jump_buf_num = 0;
     gen_instruction(OPR, 0, OPR_RET); // return
@@ -1904,12 +1577,12 @@ void interpret() {
 
     do {
         i = code[pc++];
-        switch (i.f) {
+        switch (i.func) {
             case LIT:
-                stack[++top] = i.a;
+                stack[++top] = i.addr;
                 break;
             case OPR:
-                switch (i.a) // operator
+                switch (i.addr) // operator
                 {
                     case OPR_RET:
                         top = b - 1;
@@ -1993,59 +1666,59 @@ void interpret() {
                         break;
 
                     default:
-                        fprintf(stderr, "No Such OPR_CODE=%d.\n", i.a);
+                        fprintf(stderr, "No Such OPR_CODE=%d.\n", i.addr);
                         break;
                 } // switch
                 break;
             case LOD:
-                stack[++top] = stack[get_base_addr(stack, b, i.l) + i.a];
+                stack[++top] = stack[get_base_addr(stack, b, i.level) + i.addr];
                 break;
             case LAD:
-                stack[top] = stack[get_base_addr(stack, b, i.l) + stack[top] + i.a];
+                stack[top] = stack[get_base_addr(stack, b, i.level) + stack[top] + i.addr];
                 break;
             case STO:
-                stack[get_base_addr(stack, b, i.l) + i.a] = stack[top];
+                stack[get_base_addr(stack, b, i.level) + i.addr] = stack[top];
                 //printf("%d\n", stack[top]);
                 top--;
                 break;
             case STA: //ƫ����ȡ��ջ��Ԫ��
-                stack[get_base_addr(stack, b, i.l) + stack[top - 1] + i.a] = stack[top];
+                stack[get_base_addr(stack, b, i.level) + stack[top - 1] + i.addr] = stack[top];
                 //printf("%d\n", stack[top]);
                 top -= 2;
                 break;
             case CAL:
-                stack[top + 1] = get_base_addr(stack, b, i.l);
+                stack[top + 1] = get_base_addr(stack, b, i.level);
                 // generate new block mark
                 stack[top + 2] = b;
                 stack[top + 3] = pc;
                 b = top + 1;
-                pc = i.a;
+                pc = i.addr;
                 break;
             case INT:
-                top += i.a;
+                top += i.addr;
                 break;
             case JMP:
-                pc = i.a;
+                pc = i.addr;
                 break;
             case JPC:
                 if (stack[top] == 0)
-                    pc = i.a;
+                    pc = i.addr;
                 top--;
                 break;
             case LMT:
-                stack[top + 1] = stack[top - i.a];
+                stack[top + 1] = stack[top - i.addr];
                 top = top + 1;
                 break;
             case POP:
                 top--;
                 break;
             case LTP://加载栈顶
-                top = stack[get_base_addr(stack, b, i.l) + i.a];
-                b = stack[get_base_addr(stack, b, i.l) + i.a + 1];
+                top = stack[get_base_addr(stack, b, i.level) + i.addr];
+                b = stack[get_base_addr(stack, b, i.level) + i.addr + 1];
                 break;
             case STP://保存栈顶
-                stack[get_base_addr(stack, b, i.l) + i.a] = top;
-                stack[get_base_addr(stack, b, i.l) + i.a + 1] = b;
+                stack[get_base_addr(stack, b, i.level) + i.addr] = top;
+                stack[get_base_addr(stack, b, i.level) + i.addr + 1] = b;
                 break;
         } // switch
     } while (pc);
@@ -2062,7 +1735,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/for.txt");
+        strcpy(s, "../example/array.txt");
 
     else
         strcpy(s, argv[1]);
@@ -2085,8 +1758,6 @@ int main(int argc, char *argv[]) {
 
     get_next_symbol();
 
-    break_code_index.is_break_appear = 0; //cy
-    break_code_index.is_in_loop_sign = 0; //cy
 
     int p=0;
     for(p=1;p<=MAX_JMP_BUFF;++p){
@@ -2098,7 +1769,6 @@ int main(int argc, char *argv[]) {
     longjmp_set = (longjmp_point *) malloc(sizeof (longjmp_point));
     longjmp_set->next = NULL;
 
-    break_code_index.then = NULL; //cy
     set1 = createset(SYM_PERIOD, SYM_NULL);
     set2 = uniteset(decleration_begin_sys, statement_begin_sys);
     set = uniteset(set1, set2);
@@ -2120,11 +1790,11 @@ int main(int argc, char *argv[]) {
         if(jmp_table.buf_status[buf_id] == unallocated){
             error(39);
         }else{
-            code[j_point->save_return_value_pc].l = j_point->jmp_level - setjmp_set[buf_id].level;
-            code[j_point->load_stack_top_pc].l = j_point->jmp_level - setjmp_set[buf_id].level;
-            code[j_point->save_return_value_pc].a = setjmp_set[buf_id].return_val_address;
-            code[j_point->load_stack_top_pc].a = setjmp_set[buf_id].stack_top_address;
-            code[j_point->jmp_pc].a = setjmp_set[j_point->jmp_buf_id].jmp_entry_pc;
+            code[j_point->save_return_value_pc].level = j_point->jmp_level - setjmp_set[buf_id].level;
+            code[j_point->load_stack_top_pc].level = j_point->jmp_level - setjmp_set[buf_id].level;
+            code[j_point->save_return_value_pc].addr = setjmp_set[buf_id].return_val_address;
+            code[j_point->load_stack_top_pc].addr = setjmp_set[buf_id].stack_top_address;
+            code[j_point->jmp_pc].addr = setjmp_set[j_point->jmp_buf_id].jmp_entry_pc;
         }
         j_point = j_point->next;
     }
@@ -2138,6 +1808,4 @@ int main(int argc, char *argv[]) {
         list_code(0, current_instruction_index);
         interpret();
     }
-
-
 }

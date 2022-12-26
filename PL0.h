@@ -7,7 +7,7 @@
 
 #define STEP       1
 #define MAXDIMLEN  10
-#define NRW        27     // number of reserved words
+#define NRW        20     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14    // maximum number of symbols in array ssym and csym
@@ -52,21 +52,14 @@ enum symtype {
     SYM_VAR,
     SYM_PROCEDURE,
     SYM_PRINT,
-    SYM_READ,
     SYM_FOR,
-    SYM_DOWNTO,
-    SYM_TO,
     SYM_ELSE,
     SYM_PRINTLN,
-    SYM_REPEAT,
-    SYM_UNTIL,
-    SYM_EXIT,
     SYM_AND,
     SYM_OR,
     SYM_NOT,
     SYM_LSQUARE,
     SYM_RSQUARE,
-    SYM_BREAK,
     SYM_ADDEQU,
     SYM_SUBEQU,
     SYM_ADDADD,
@@ -123,9 +116,9 @@ int oprtime[100] =
                 1, 1, 1
         };
 typedef struct {
-    int f; // function code
-    int l; // level
-    int a; // displacement address
+    int func; // function code
+    int level; // level
+    int addr; // displacement address
 } instruction;
 
 //////////////////////////////////////////////////////////////////////
@@ -192,11 +185,6 @@ int tx_[100]; //每递归调用一次block开始时table的tx位置
 int dim = 0;
 int array_size = 1;
 int latit[MAXDIMLEN];
-int proth[100]; //cy_quote
-typedef struct cxlink {
-    int break_code_index;
-    struct cxlink *next;
-} *break_code_index_list;
 
 typedef struct procedure_link {
     int table_adr;
@@ -205,13 +193,6 @@ typedef struct procedure_link {
     struct procedure_list *next;
 } procedure_list;
 
-typedef struct { //cy
-    int is_break_appear;
-    int is_in_loop_sign;//当前break是否在某个循环中
-    break_code_index_list then;
-} break_code_block; //存放break代码地址
-
-break_code_block break_code_index;
 char line[200];
 
 instruction code[CXMAX];
@@ -219,15 +200,15 @@ instruction code[CXMAX];
 char *word[NRW + 1] = {"", /* place holder */
                        "begin", "call", "const", "do", "end", "if", //6
                        "odd", "procedure", "then", "var", "while", //11
-                       "print", "read", "for", "downto", "to", "else", //17
-                       "println", "repeat", "until", "exit", "and", //22
-                       "or", "not", "break","setjmp","longjmp"
+                       "print", "for",  "else", //17
+                       "println",  "and", //22
+                       "or", "not", "setjmp","longjmp"
 };
 
 int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
                      SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_PRINT,
-                     SYM_READ, SYM_FOR, SYM_DOWNTO, SYM_TO, SYM_ELSE, SYM_PRINTLN,
-                     SYM_REPEAT, SYM_UNTIL, SYM_EXIT, SYM_AND, SYM_OR, SYM_NOT, SYM_BREAK
+                      SYM_FOR, SYM_ELSE, SYM_PRINTLN,
+                      SYM_AND, SYM_OR, SYM_NOT
                         , SYM_SETJMP, SYM_LONGJMP};
 
 int ssym[NSYM + 1] = {SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
@@ -250,7 +231,6 @@ typedef struct {
     int kind;
     int value;
     int numOfPar;
-    int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
     int cnt;
     int lpl;//loop_level
@@ -265,7 +245,6 @@ typedef struct {
     short level;
     short address;
     int numOfPar;
-    int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
     int cnt;
     int lpl;//loop_level
@@ -279,7 +258,6 @@ typedef struct {
     short level;
     short address;
     int numOfPar;
-    int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
     int cnt;
     int lpl;//loop_level
@@ -289,8 +267,6 @@ jmp_state_table jmp_table;
 setjmp_point setjmp_set[MAX_JMP_BUFF+1];
 longjmp_point *longjmp_set;
 FILE *infile;
-int jdgok(int curBlkNum, int saveBlkNum);
-void print_table();
 void in_block();
 void out_block(int saveBlkNum, int saveBlkLvl);
 void error(int n);
@@ -305,13 +281,10 @@ int get_identifier_id(char *identifier);
 void const_declaration(symset fsys);
 void var_declaration(void);
 void list_code(int from, int to);
-int const_factor(symset fsys);
-int const_term(symset fsys);
-int const_expression(symset fsys);
 void dim_declaration(void);
-mask *factor(symset fsys);
-mask *term(symset fsys);
-mask *expression(symset fsys);
+void factor(symset fsys);
+void term(symset fsys);
+void expression(symset fsys);
 void condition(symset fsys);
 void statement(symset fsys);
 void block(symset fsys);
