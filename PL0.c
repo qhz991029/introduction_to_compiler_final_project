@@ -332,8 +332,8 @@ void const_declaration(symset fsys) {
             if (last_sym_read == SYM_BECOMES)
                 error(1); // Found ':=' when expecting '='.
             get_next_symbol();
-            last_num_read = const_expression(
-                    uniteset(fsys, createset(SYM_COMMA, SYM_SEMICOLON, SYM_NULL)));
+            last_num_read = last_num_read;
+            get_next_symbol();
             strcpy(id, idsaved);
             enter_obj_2_table(ID_CONSTANT);
         } else {
@@ -375,123 +375,8 @@ void list_code(int from, int to) {
     printf("\n");
 } // list_code
 
-int const_factor(symset fsys) {
-    int i;
-    int n;
-    symset set;
-    test(factor_begin_sys, fsys, 24); // The symbol can not be as the beginning of an expression.
-    while (inset(last_sym_read, factor_begin_sys)) {
-        if (last_sym_read == SYM_IDENTIFIER) {
-
-            if ((i = get_identifier_id(id)) == 0) {
-
-                error(11); // Undeclared identifier.
-                get_next_symbol();
-            } else {
-                array *ar = (array *) &table[i];
-
-                switch (table[i].kind) {
-                    mask *mk;
-                    case ID_CONSTANT:
-                        n = table[i].value;
-                        get_next_symbol();
-                        break;
-                    case ID_VARIABLE:
-                        error(37);
-                        get_next_symbol();
-                        break;
-                    case ID_PROCEDURE:
-                        error(21); // Procedure identifier can not be in an expression.
-                        get_next_symbol();
-                        break;
-                    default:
-                        error(37);
-                        break;
-                } // switch
-            }
-        } else if (last_sym_read == SYM_NUMBER) {
-            if (last_num_read > MAXADDRESS) {
-                error(25); // The number is too great.
-                last_num_read = 0; //number̫����ֱ�Ӹ�ֵΪ0
-            }
-            n = last_num_read;
-            get_next_symbol();
-        } else if (last_sym_read == SYM_LPAREN){
-            get_next_symbol();
-            set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
-            n = const_expression(set);
-            destroyset(set);
-            if (last_sym_read == SYM_RPAREN) {
-                get_next_symbol();
-            } else {
-                error(22); // Missing ')'.
-            }
-
-        } else if (last_sym_read == SYM_MINUS) {
-            get_next_symbol();
-            n = const_factor(factor_begin_sys) * (-1);
-            destroyset(set);
-
-        }
-    } // while
-    return n;
-} // factor
-
-int const_term(symset fsys) {
-    int mulop;
-    symset set;
-
-    set = uniteset(fsys, createset(SYM_TIMES, SYM_SLASH, SYM_NULL));
-    int n1 = const_factor(set);
-    int n = n1;
-    while (last_sym_read == SYM_TIMES || last_sym_read == SYM_SLASH) {
-        mulop = last_sym_read;
-        get_next_symbol();
-        int n2 = const_factor(set);
-        if (mulop == SYM_TIMES) {
-            n1 = n1 * n2;
-        } else {
-            n1 = n1 / n2;
-        }
-    } // while
-    destroyset(set);
-    return n1;
-} // term
-
-int const_expression(symset fsys) {
-    int addop;
-    symset set;
-    int n = 0;
-    set = uniteset(fsys, createset(SYM_PLUS, SYM_MINUS, SYM_NULL));
-    if (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
-        addop = last_sym_read;
-        get_next_symbol();
-        n = const_term(set);
-        if (addop == SYM_MINUS) {
-            n = -n;
-        }
-    } else {
-        n = const_term(set);
-    }
-
-    while (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
-        addop = last_sym_read;
-        get_next_symbol();
-        int n1 = const_term(set);
-        if (addop == SYM_PLUS) {
-            n = n + n1;
-        } else {
-            n = n - n1;
-        }
-    } // while
-
-    destroyset(set);
-    return n;
-} // expression
-int sx = 0;
 void dim_declaration(void) {
     char idsaved[MAXIDLEN + 1] = {'\0'};
-    int constexpre(symset fsys);
     strcpy(idsaved, id);
     dim = 0; //��ʼ��
     array_size = 1; //��ʼ��
@@ -506,7 +391,8 @@ void dim_declaration(void) {
 //         error(26); //lack last_num_read
 //         }
         symset set = createset(SYM_RSQUARE, SYM_NULL);
-        int nn = const_expression(set);
+        int nn = last_num_read;
+        get_next_symbol();
         latit[dim++] = nn;
         destroyset(set);
         array_size *= nn;
@@ -746,7 +632,8 @@ void factor(symset fsys) {
             get_next_symbol();
             symset set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
             set = uniteset(set1, fsys);
-            int buf_idx = const_expression(set);
+            int buf_idx = last_num_read;
+            get_next_symbol();
             jmp_table.buf_status[buf_idx] = allocated;
             setjmp_set[buf_idx].level = level;
             if (jmp_table.is_in_condition_block == inside){
@@ -1416,7 +1303,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int buf_idx = const_expression(set);
+        int buf_idx = last_num_read;
+        get_next_symbol();
         //为跳转分配的空间+2，用来储存该跳跃点的返回值栈顶
         jmp_table.total_jump_buf_num += 3;//done
         jmp_table.buf_status[buf_idx] = allocated;
@@ -1446,7 +1334,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int buf_idx = const_expression(set);
+        int buf_idx = last_num_read;
+        get_next_symbol();
         destroyset(set1);
         destroyset(set);
         if(last_sym_read != SYM_COMMA){
@@ -1455,7 +1344,8 @@ void statement(symset fsys) {
         get_next_symbol();
         set1 = createset(SYM_COMMA, SYM_RPAREN, SYM_NULL);
         set = uniteset(set1, fsys);
-        int return_val = const_expression(set);
+        int return_val = last_num_read;
+        get_next_symbol();
         destroyset(set1);
         destroyset(set);
 
@@ -1845,7 +1735,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/for.txt");
+        strcpy(s, "../example/array.txt");
 
     else
         strcpy(s, argv[1]);

@@ -5,13 +5,17 @@ begin
         for (var j: (0, 2, 1))
         begin
             a[i][j] := -i * j;
+            print(a[i][j]);
+            print();
         end;
     end;
+    print();
     for (var i: (0, 3, 1))
     begin
-        for (var j: (1, -1, -1))
+        for (var j: (0, 2, 1))
         begin
             print(a[i][j]);
+            print();
         end;
     end;
 end.
