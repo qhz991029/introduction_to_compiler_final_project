@@ -17,14 +17,13 @@ begin
 end;
 
 begin
-    result := setjmp(1);
-	if (result = 1) then
+	if ((result := setjmp(1)) = 2) then
 	    begin
 	        print(result);
 		    print(1111);
 		end
 	else begin
-		if (result = 2) then
+		if (result = 1) then
 			print(2222)
 		else begin
 			print(999);

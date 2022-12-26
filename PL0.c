@@ -557,87 +557,156 @@ mask *factor(symset fsys) {
     test(factor_begin_sys, fsys, 24);// The symbol can not be as the beginning of an expression.
     while (inset(last_sym_read, factor_begin_sys)) {
         if (last_sym_read == SYM_IDENTIFIER) {
-
             if ((i = get_identifier_id(id)) == 0) {
-
                 error(11); // Undeclared identifier.
                 get_next_symbol();
-            } else {
+            }
+            get_next_symbol();
+            if(last_sym_read == SYM_BECOMES){
+                 // variable assignment
+                    mask *mk;
+                    array *ar = (array *) &table[i];
+                    if (!i) {
+                        error(11); // Undeclared identifier.
+                        get_next_symbol();
+                    } else if ((table[i].kind != ID_VARIABLE) && (ar->kind != ID_ARRAY)) {
+                        error(12); // Illegal assignment.
+                        i = 0;
+                    }
+                    if ((ar->kind == ID_ARRAY)) {
+                        int dl = 0;
+                        p_dim *p = ar->next;
+                        if (last_sym_read == SYM_LSQUARE) {
+                            gen_instruction(LIT, 0, 0);
+                            gen_instruction(LIT, 0, p->dim_len);
+                            while (last_sym_read == SYM_LSQUARE)   //cy_array
+                            {
+                                if (p)   //cy_array
+                                {
+                                    p = p->next;
+                                }
+                                gen_instruction(OPR, 0, OPR_MUL);
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_COMMA, SYM_NULL)));
+                                dl++; //cy_array
+                                if (last_sym_read == SYM_RSQUARE) {
+                                    get_next_symbol();
+                                } else {
+                                    error(27);
+                                }
+                                gen_instruction(OPR, 0, OPR_ADD);
+                                if (p) {
+                                    gen_instruction(LIT, 0, p->dim_len);
+                                }
+                            }
+                            if (last_sym_read != SYM_BECOMES)   //cy_array
+                            {
+                                symset set1 = createset(SYM_BECOMES, SYM_NULL);
+                                test(set1, fsys, 0);
+                                destroyset(set1);
+                            }
+                            if (dl != ar->dim_n)   //cy_array
+                            {
+                                error(26);
+                            }
+                        } else {
+                            error(28); //need'['
+                        }
+                    }
+                    if (i) {
+                        if ((table[i].kind == ID_VARIABLE)) {
+                            if (last_sym_read == SYM_BECOMES) {
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                mk = (mask *) &table[i];
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_ADDEQU) {
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                gen_instruction(OPR, 0, OPR_ADD);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_MULEQU) {
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                gen_instruction(OPR, 0, OPR_MUL);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_SUBEQU) {
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                gen_instruction(OPR, 0, OPR_MIN);
+                                gen_instruction(OPR, 0, OPR_NEG);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_DIVEQU) {
+                                get_next_symbol();
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                gen_instruction(OPR, 0, OPR_DIV);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_MODEQU) {
+                                get_next_symbol();
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                gen_instruction(OPR, 0, OPR_MOD);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_ADDADD) {
+                                get_next_symbol();
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                gen_instruction(LIT, 0, 1);
+                                gen_instruction(OPR, 0, OPR_ADD);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else if (last_sym_read == SYM_SUBSUB) {
+                                get_next_symbol();
+                                mk = (mask *) &table[i];
+                                gen_instruction(LOD, level - mk->level, mk->address);
+                                gen_instruction(LIT, 0, 1);
+                                gen_instruction(OPR, 0, OPR_MIN);
+                                gen_instruction(STO, level - mk->level, mk->address);
+                                gen_instruction(LOD,level - mk->level, mk->address);
+                            } else error(13);
 
+                        } else {
+                            if (last_sym_read == SYM_BECOMES) {
+                                get_next_symbol();
+                                expression(uniteset(fsys, createset(SYM_SEMICOLON, SYM_NULL)));
+                                mk = (mask *) &table[i];
+                                gen_instruction(LMT,0,0);
+                                gen_instruction(LMT,0,0);
+                                gen_instruction(STA, level - mk->level, mk->address);
+                                gen_instruction(POP,0,0);
+                                gen_instruction(LAD,level - mk->level, mk->address);
+                            } else error(13); // ':=' expected.
+                            //
+                        }
+                    }
+            }else{
                 array *ar = (array *) &table[i];
                 mask *tmk;
                 switch (table[i].kind) {
                     case ID_CONSTANT:
-
                         gen_instruction(LIT, 0, table[i].value); //????
-                        get_next_symbol();
                         break;
                     case ID_VARIABLE:
                         tmk = (mask *) &table[i];
                         gen_instruction(LOD, level - tmk->level, tmk->address);
-                        get_next_symbol();
-                        break;
-                    case ID_PROCEDURE:;
-                        mask *tp;
-                        tp = (mask *) &table[i];
-
-                        get_next_symbol();
-                        if (last_sym_read == SYM_LPAREN) {
-                            get_next_symbol();
-                            if (last_sym_read == SYM_RPAREN) {
-                                if (tp->numOfPar == 0)
-                                    gen_instruction(CAL, level - tp->level, tp->address);
-                                else
-                                    error(34); // the number of segement doesn't match
-                                get_next_symbol();
-                                goto ff2;
-                            } else {
-                                int k = 0;
-                                do {
-
-                                    if (last_sym_read == SYM_COMMA)
-                                        get_next_symbol();
-                                    k++;
-                                    symset set1 = createset(SYM_RPAREN, SYM_NULL);
-                                    set = uniteset(set1, fsys);
-                                    expression(set);
-                                    destroyset(set);
-                                    destroyset(set1);
-                                    if (k > tp->numOfPar) {
-                                        error(34); //too many segments
-                                        break;
-                                    }
-                                } while (last_sym_read == SYM_COMMA);
-
-                                if (last_sym_read == SYM_RPAREN) {
-                                    if (tp->numOfPar == k)
-                                        gen_instruction(CAL, level - tp->level, tp->address);
-                                    else
-                                        error(34); //error "didn't match"
-                                    get_next_symbol();
-                                    goto ff2;
-                                } else {
-                                    error(22); //')' missing
-                                    goto ff2;
-                                }
-                            }
-                        } else {
-                            if (tp->numOfPar == 0)
-                                gen_instruction(CAL, level - tp->level, tp->address);
-                            else
-                                error(34); //didn't match
-                            goto ff2;
-
-                        }
-                        get_next_symbol();
-                    ff2:;
-
-                        gen_instruction(INT, 0, -tp->numOfPar + 1);
-                        //gen(INT,0,1);
                         break;
                     default:
                         if ((ar->kind == ID_ARRAY)) { //??��?????m??
-                            get_next_symbol();
                             int dl = 0;
                             p_dim *p = ar->next;
                             if (last_sym_read == SYM_LSQUARE) {
@@ -679,8 +748,7 @@ mask *factor(symset fsys) {
         {
             get_next_symbol();
             set = uniteset(createset(SYM_RPAREN, SYM_NULL), fsys);
-            //expression(set);
-            mask *mk2 = expression(set);
+            condition(set);
             destroyset(set);
             if (last_sym_read == SYM_RPAREN) {
                 get_next_symbol();
@@ -789,20 +857,7 @@ void condition(symset fsys) {
 
     while (inset(last_sym_read, con_facbegsys)) //conbeg
     {
-        if (last_sym_read == SYM_LPAREN) {
-            get_next_symbol();
-            set1 = createset(SYM_RPAREN, SYM_NULL);
-            set = uniteset(set1, fsys);
-            condition(set);
-            destroyset(set);
-            destroyset(set1);
-            if (last_sym_read == SYM_RPAREN) {
-                get_next_symbol();
-            } else {
-                error(22); // Missing ')'
-            }
-        }
-        else if (last_sym_read == SYM_ODD || last_sym_read == SYM_NOT){
+        if (last_sym_read == SYM_ODD || last_sym_read == SYM_NOT){
             int saveSym = last_sym_read;
             get_next_symbol();
             condition(fsys);
@@ -1421,15 +1476,24 @@ void statement(symset fsys) {
             error(19);//missing VAR
         }
         get_next_symbol();
-        if (last_sym_read != SYM_IDENTIFIER)
+        if (last_sym_read != SYM_IDENTIFIER){
             error(4);// id
-        i = get_identifier_id(id);
-
-        mk = (mask *) &table[i];
-        if (i == 0)
-            error(11);
-        else if (table[i].kind != ID_VARIABLE) //ASSIGNMENT TO NON-VARIABLE
-            error(12);
+        }else{
+            i = get_identifier_id(id);
+        }
+        if (i == 0) {
+            tx++;
+            strcpy(table[tx].name, id);
+            table[tx].kind = ID_VARIABLE;
+            mk = (mask *)&table[tx];
+            mk->address = data_alloc_index[level]++;
+            mk->level = level;
+            jmp_table.total_jump_buf_num += 1;
+        }else{
+            mk = (mask *) &table[i];
+            if (table[i].kind != ID_VARIABLE) //ASSIGNMENT TO NON-VARIABLE
+                error(12);
+        }
         get_next_symbol();
         if (last_sym_read != SYM_COLON) //:
             error(13);
@@ -1998,7 +2062,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/setjmp.txt");
+        strcpy(s, "../example/for.txt");
 
     else
         strcpy(s, argv[1]);

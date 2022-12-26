@@ -1,4 +1,4 @@
-var i,j,k;
+var j,k;
 procedure p;
 begin
   j := 2;
