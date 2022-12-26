@@ -1,0 +1,7 @@
+var i,j,k,l;
+begin
+	i:= (j:=2) + 3;
+	k:=l:=3;
+	print(i,j);
+	print(k,l);
+end.
