@@ -1476,15 +1476,24 @@ void statement(symset fsys) {
             error(19);//missing VAR
         }
         get_next_symbol();
-        if (last_sym_read != SYM_IDENTIFIER)
+        if (last_sym_read != SYM_IDENTIFIER){
             error(4);// id
-        i = get_identifier_id(id);
-
-        mk = (mask *) &table[i];
-        if (i == 0)
-            error(11);
-        else if (table[i].kind != ID_VARIABLE) //ASSIGNMENT TO NON-VARIABLE
-            error(12);
+        }else{
+            i = get_identifier_id(id);
+        }
+        if (i == 0) {
+            tx++;
+            strcpy(table[tx].name, id);
+            table[tx].kind = ID_VARIABLE;
+            mk = (mask *)&table[tx];
+            mk->address = data_alloc_index[level]++;
+            mk->level = level;
+            jmp_table.total_jump_buf_num += 1;
+        }else{
+            mk = (mask *) &table[i];
+            if (table[i].kind != ID_VARIABLE) //ASSIGNMENT TO NON-VARIABLE
+                error(12);
+        }
         get_next_symbol();
         if (last_sym_read != SYM_COLON) //:
             error(13);
@@ -2053,7 +2062,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/assignment_expression.txt");
+        strcpy(s, "../example/for.txt");
 
     else
         strcpy(s, argv[1]);
