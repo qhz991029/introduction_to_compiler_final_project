@@ -3,7 +3,6 @@
 #pragma warning(disable:4996)
 #include "PL0.h"
 #include "set.h"
-#include "print.h"
 
 int data_alloc_index[MAXLEVEL]; // data allocation index
 int zx[MAXLEVEL];
@@ -69,7 +68,6 @@ void getch(void) {
         printf("\n");
         line[++line_length] = ' ';
         line[line_length + 1] = '\0';
-        print_to_write(line, &line_length);
     }
     last_char_read = line[++char_count];
 } // getch
@@ -1568,7 +1566,7 @@ void statement(symset fsys) {
 
         jmp_table.is_in_condition_block = inside;
     } // while statement
-    else if (last_sym_read == SYM_WRITE || last_sym_read == SYM_WRITELN){
+    else if (last_sym_read == SYM_PRINT){
         int saveSym = last_sym_read;
         get_next_symbol();
 
@@ -1597,12 +1595,12 @@ void statement(symset fsys) {
                 destroyset(set);
                 gen_instruction(OPR, 0, OPR_PRT);
             }
+        }else{
+            gen_instruction(OPR, 0, OPR_WTL); // new line
         }
+
         if (last_sym_read == SYM_RPAREN) {
             get_next_symbol();
-            if (saveSym == SYM_WRITELN) {
-                gen_instruction(OPR, 0, OPR_WTL); // new line
-            }
         } else {
             error(22); //"Missing ')'."
         }
@@ -2421,7 +2419,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/setjmp.txt");
+        strcpy(s, "../example/for.txt");
 
     else
         strcpy(s, argv[1]);

@@ -6,12 +6,7 @@ end;
 begin
   for(var i:(10,1, -1))
   begin
-      print(i);
-      print();
-      for(var j:(1,2, 1))
-      begin
-          print(j);
-      end;
+      print(i, i, i);
       print();
   end;
   end.
