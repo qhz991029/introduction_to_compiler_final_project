@@ -588,132 +588,9 @@ void dim_declaration(void) {
 //     printf("\n");
 }
 // tests if error occurs and skips all symbols that do not belongs to s1 or s2.
-void optimize(mask *mk, int saveCx) {
-
-    //printf("cx:	%d,	loop_level:	%d,	name:	%s\n",cx,loop_level,mk->name);
-
-    //if (loop_level>0) return;
-    if (!OPTM) return;
-    evl ee = mk->evl;
-    ee = ee->next;
-    int cnt = 0;
-    while (ee) {
-        ee = ee->next;
-        cnt++;
-    }
-    strcpy(id, mk->name);
-    if (cnt > 1) {
-
-
-        int i = get_identifier_id(id);
-
-        if (!i) {
-            enter_obj_2_table(ID_VARIABLE);
-            mask *tp = (mask *) &table[tx];
-            tp->quote = 1;
-            table[tx].evl = mk->evl;
-            gen_instruction(STO, level - tp->level, tp->address);
-            tp->cnt++;
-            gen_instruction(LOD, level - tp->level, tp->address);
-
-        } else {
-            int flag = 1;
-            evl e1 = mk->evl;
-            evl e2 = table[i].evl;
-
-
-            flag = jdgok(block_num, table[i].blkNum);
-            table[i].blkNum = block_num;
-
-
-            e1 = e1->next;
-            e2 = e2->next;
-            while (e1) {
-                if (e1->cnt > e2->cnt || e1->lpl > e2->lpl) {
-                    e2->cnt = e1->cnt;
-                    e2->lpl = e1->lpl;
-                    flag = 0;
-                }
-                e1 = e1->next;
-                e2 = e2->next;
-            }
-            if (flag) {
-                printf("===============Improved in expression %s==============\n", table[i].name);
-                if (sx) //term update
-                {
-                    current_instruction_index = sx;
-                    printf("cx=%d\n", current_instruction_index);
-                    sx = 0;
-                } else {
-                    current_instruction_index = saveCx;
-                    mask *tp = (mask *) &table[i];
-                    gen_instruction(LOD, level - tp->level, tp->address);
-                }
-            }
-
-
-        }
-    }
-
-}
-
-void optimize_term(mask *mk, int saveCx) {
-    //if (loop_level>0) return;\OPTM
-    if (!OPTM) return;
-    evl ee = mk->evl;
-    ee = ee->next;
-    int cnt = 0;
-    while (ee) {
-        ee = ee->next;
-        cnt++;
-    }
-    strcpy(id, mk->name);
-    if (cnt > 1) {
-
-
-        int i = get_identifier_id(id);
-
-        if (!i) {
-            //do nothing
-
-            enter_obj_2_table(ID_VARIABLE);
-            mask *tp = (mask *) &table[tx];
-            tp->quote = 1;
-            table[tx].evl = mk->evl;
-            gen_instruction(STO, level - tp->level, tp->address);
-            tp->cnt++;
-            gen_instruction(LOD, level - tp->level, tp->address);
-            sx = current_instruction_index;
-        } else {
-            sx = 0;
-            int flag = 1;
-            evl e1 = mk->evl;//next,next->next
-            evl e2 = table[i].evl;//next,next->next
 
 
 
-
-            e1 = e1->next;
-            e2 = e2->next;
-            while (e1) {
-                if (e1->cnt > e2->cnt || e1->lpl > e2->lpl) {
-                    //e2->cnt = e1->cnt;
-                    //e2->lpl	= e1->lpl;
-                    flag = 0;
-                }
-                e1 = e1->next;
-                e2 = e2->next;
-            }
-            if (flag) {
-                printf("===============Improved in term==============\n");
-                current_instruction_index = saveCx;
-                mask *tp = (mask *) &table[i];
-                gen_instruction(LOD, level - tp->level, tp->address);
-            }
-        }
-    }
-
-}
 
 mask *factor(symset fsys) {
     mask *mk = (mask *) malloc(sizeof(mask));
@@ -939,8 +816,6 @@ mask *term(symset fsys) {
         }
     } // while
     destroyset(set);
-    if (OPTM)
-        optimize_term(mk, saveCx);
     return mk;
 } // term
 
@@ -973,7 +848,6 @@ mask *expression(symset fsys) {
     }
 
     while (last_sym_read == SYM_PLUS || last_sym_read == SYM_MINUS) {
-        optimize(mk, saveCx);
         if (last_sym_read == SYM_PLUS)
             strcat(mk->name, "+");
         else
@@ -991,10 +865,6 @@ mask *expression(symset fsys) {
     } // while
 
     destroyset(set);
-    //printf("mk->name: %s\n",mk->name);
-    //printevl(mk->evl);
-    optimize(mk, saveCx);
-
 
     return mk;
 }
@@ -2191,40 +2061,6 @@ void block(symset fsys) {
 
     jmp_table.total_jump_buf_num = 0;
 
-    if (OPTM_CY) {
-        var_num = data_alloc_index[level] - 2;
-        var_n = search_var(var_num, pro_num); //cy_quote
-        //int var_n2 = search_var(var_num, pro_num, 2); //cy_quote
-        pro_n = search_pro(pro_num); //cy_quote
-        if (var_n) {
-            cut_pro_var_code(cx0, current_instruction_index, tx_[level], tx - pro_n); //cy_quote
-            cut_pro_var_code(jmp_code_index + 1, cx0, tx_[level], tx - pro_n); //cy_quote
-        }
-
-        code[cx0].a -= var_n; //cy_quote
-        if (pro_n)   //如果有无用的过程
-        {
-            procedure_list *q = pro;
-            int proth_formor = -1;
-            for (int k = 0; k < pro_n; k++) {
-                for (int n = proth[k] - proth_formor; n != 1; n--) {
-                    q = q->next;
-                }
-                proth_formor = proth[k];
-                int codelen = q->end - q->start; //对应过程的长�?
-                for (procedure_list *qq = q->next; qq; qq = qq->next) {
-                    qq->start -= codelen;
-                    qq->end -= codelen;
-                    //			mask* mk = (mask*) &table[qq->table_adr]; //已被调用过程的table
-                    //			mk->address -= codelen;
-                }
-                cut_code(q->start, q->end); //剪掉代码段，改变jmp\jpc\call
-                code[jmp_code_index].a -= codelen;
-                cx0 -= codelen; //cx0为第一条INT指令，相当于本block的statement的首地址
-            }
-        }
-    }
-
     gen_instruction(OPR, 0, OPR_RET); // return
     test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
     //list_code(cx0, current_instruction_index);
@@ -2498,6 +2334,5 @@ int main(int argc, char *argv[]) {
         list_code(0, current_instruction_index);
         interpret();
     }
-    printf("OPTM=%d,	OPTM_CY=%d\n", OPTM, OPTM_CY);
 
 }

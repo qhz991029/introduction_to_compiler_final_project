@@ -6,8 +6,6 @@
 #include "set.h"
 #include "jmp_table.h"
 
-#define OPTM    0
-#define OPTM_CY 0
 #define STEP       1
 #define MAXDIMLEN  10
 #define NRW        27     // number of reserved words
