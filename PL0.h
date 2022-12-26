@@ -7,7 +7,7 @@
 
 #define STEP       1
 #define MAXDIMLEN  10
-#define NRW        23     // number of reserved words
+#define NRW        22     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14    // maximum number of symbols in array ssym and csym
@@ -52,7 +52,6 @@ enum symtype {
     SYM_VAR,
     SYM_PROCEDURE,
     SYM_PRINT,
-    SYM_READ,
     SYM_FOR,
     SYM_ELSE,
     SYM_PRINTLN,
@@ -215,14 +214,14 @@ instruction code[CXMAX];
 char *word[NRW + 1] = {"", /* place holder */
                        "begin", "call", "const", "do", "end", "if", //6
                        "odd", "procedure", "then", "var", "while", //11
-                       "print", "read", "for",  "else", //17
+                       "print", "for",  "else", //17
                        "println", "exit", "and", //22
                        "or", "not", "break","setjmp","longjmp"
 };
 
 int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
                      SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_PRINT,
-                     SYM_READ, SYM_FOR, SYM_ELSE, SYM_PRINTLN,
+                      SYM_FOR, SYM_ELSE, SYM_PRINTLN,
                      SYM_EXIT, SYM_AND, SYM_OR, SYM_NOT, SYM_BREAK
                         , SYM_SETJMP, SYM_LONGJMP};
 
