@@ -9,15 +9,6 @@ int zx[MAXLEVEL];
 
 void in_block() {
     block_num = block_num * 10 + block_level_count[block_level];
-    /*
-    if (block_num==101111) {
-        int kk;
-        kk=1;
-        print_table();
-    }
-    */
-
-//    printf("blk_num=%d\n",block_num);
     block_level_count[block_level]++;
     block_level++;
     block_level_count[block_level] = 0;
@@ -26,7 +17,6 @@ void in_block() {
 void out_block(int saveBlkNum, int saveBlkLvl) {
     block_level = saveBlkLvl;
     block_num = saveBlkNum;
-//	printf("blk_num=%d\n",block_num);
 }
 
 void error(int n) {
@@ -1154,56 +1144,6 @@ void statement(symset fsys) {
         }
 
     }  // procedure call
-    else if (last_sym_read == SYM_REPEAT) {
-        int saveBlkNum = block_num;
-        int saveBlkLvl = block_level;
-        set1 = createset(SYM_UNTIL, SYM_SEMICOLON, SYM_NULL);
-        set = uniteset(set1, fsys);
-        cx1 = current_instruction_index;
-        get_next_symbol();
-
-        break_code_block cxbsaved = break_code_index; //cy
-
-        break_code_index.is_break_appear = 0; //cy
-        break_code_index.is_in_loop_sign = 1; //cy
-
-        break_code_index.then = NULL; //cy
-        statement(set1);
-        if (last_sym_read != SYM_SEMICOLON) {
-            error(10); // "';' expected."
-        } else {
-            get_next_symbol();
-            if (last_sym_read == SYM_UNTIL) {
-                get_next_symbol();
-
-                condition(set);
-                gen_instruction(JPC, 0, cx1);
-
-
-                if (break_code_index.is_break_appear)   //cy
-
-                {
-                    break_code_index_list p = break_code_index.then;
-                    while (p) {
-                        code[p->break_code_index].a = current_instruction_index;
-                        break_code_index_list q = p;
-                        free(p);
-                        p = q->next;
-                    }
-
-                }
-
-                break_code_index.is_break_appear = cxbsaved.is_break_appear; //cy
-                break_code_index.then = cxbsaved.then; //cy
-                break_code_index.is_in_loop_sign = cxbsaved.is_in_loop_sign; //cy
-
-
-            } else
-                error(31); //missing repeat
-
-            out_block(saveBlkNum, saveBlkLvl);
-        }
-    }
     else if (last_sym_read == SYM_IF) {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
