@@ -54,13 +54,13 @@ enum symtype {
     SYM_CONST,
     SYM_VAR,
     SYM_PROCEDURE,
-    SYM_WRITE,
+    SYM_PRINT,
     SYM_READ,
     SYM_FOR,
     SYM_DOWNTO,
     SYM_TO,
     SYM_ELSE,
-    SYM_WRITELN,
+    SYM_PRINTLN,
     SYM_REPEAT,
     SYM_UNTIL,
     SYM_EXIT,
@@ -222,16 +222,16 @@ instruction code[CXMAX];
 char *word[NRW + 1] = {"", /* place holder */
                        "begin", "call", "const", "do", "end", "if", //6
                        "odd", "procedure", "then", "var", "while", //11
-                       "write", "read", "for", "downto", "to", "else", //17
-                       "writeln", "repeat", "until", "exit", "and", //22
+                       "print", "read", "for", "downto", "to", "else", //17
+                       "println", "repeat", "until", "exit", "and", //22
                        "or", "not", "break","setjmp","longjmp"
 };
 
 int wsym[NRW + 1] = {SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
-                     SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE,
-                     SYM_READ, SYM_FOR, SYM_DOWNTO, SYM_TO, SYM_ELSE, SYM_WRITELN,
+                     SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_PRINT,
+                     SYM_READ, SYM_FOR, SYM_DOWNTO, SYM_TO, SYM_ELSE, SYM_PRINTLN,
                      SYM_REPEAT, SYM_UNTIL, SYM_EXIT, SYM_AND, SYM_OR, SYM_NOT, SYM_BREAK
-                        ,SYM_SETJMP,SYM_LONGJMP};
+                        , SYM_SETJMP, SYM_LONGJMP};
 
 int ssym[NSYM + 1] = {SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
                       SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON,
@@ -307,7 +307,6 @@ void enter_obj_2_table(int kind);
 void test(symset s1, symset s2, int n);
 void enter_par();
 void modify_table(int numOfPar);
-void print_table();
 int get_identifier_id(char *identifier);
 void const_declaration(symset fsys);
 void var_declaration(void);
