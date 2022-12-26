@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "evl.h"
 #include "set.h"
 #include "jmp_table.h"
 
@@ -253,7 +252,6 @@ typedef struct {
     int numOfPar;
     int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
-    evl evl;
     int cnt;
     int lpl;//loop_level
     int blkNum;
@@ -269,7 +267,6 @@ typedef struct {
     int numOfPar;
     int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
-    evl evl;
     int cnt;
     int lpl;//loop_level
     int blkNum;
@@ -284,7 +281,6 @@ typedef struct {
     int numOfPar;
     int quote; //是否引用过;0未引用;1引用过
     p_dim *next;
-    evl evl;
     int cnt;
     int lpl;//loop_level
     int blkNum;
@@ -313,21 +309,11 @@ int const_factor(symset fsys);
 int const_term(symset fsys);
 int const_expression(symset fsys);
 void dim_declaration(void);
-void optimize(mask *mk, int saveCx);
-void optimize_term(mask *mk, int saveCx);
 mask *factor(symset fsys);
 mask *term(symset fsys);
 mask *expression(symset fsys);
-void condition_factor(symset fsys);
-void condition_term(symset fsys);
 void condition(symset fsys);
 void statement(symset fsys);
-int get_array_size(int i);
-int search_var(int len, int from);
-int search_pro(int n);
-void cut_code(int start, int end);
-int locate(int n, int star_tx, int end_tx, int f);
-void cut_pro_var_code(int star_cx, int end_cx, int star_tx, int end_tx);
 void block(symset fsys);
 int get_base_addr(int stack[], int currentLevel, int levelDiff);
 void interpret();

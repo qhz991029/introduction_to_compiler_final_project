@@ -1,4 +1,4 @@
-var result,i;
+var result,i,tar,k,l,j;
 
 procedure banana;
 
@@ -17,9 +17,12 @@ begin
 end;
 
 begin
-	result := setjmp(1);
+    result := setjmp(1);
 	if (result = 1) then
-		print(1111)
+	    begin
+	        print(result);
+		    print(1111);
+		end
 	else begin
 		if (result = 2) then
 			print(2222)
