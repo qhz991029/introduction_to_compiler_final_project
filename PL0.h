@@ -69,7 +69,7 @@ enum symtype {
     SYM_MODEQU,
     SYM_COLON,
     SYM_SETJMP,
-    SYM_LONGJMP
+    SYM_LONGJMP,
 };
 
 enum idtype {
@@ -263,6 +263,12 @@ typedef struct {
     int lpl;//loop_level
     int blkNum;
 } array;
+typedef struct  if_else_node{
+    int jump_next_block_pc;
+    int leave_pc;
+    int entry_pc;
+    struct if_else_node * next;
+}if_else_node;
 jmp_state_table jmp_table;
 setjmp_point setjmp_set[MAX_JMP_BUFF+1];
 longjmp_point *longjmp_set;

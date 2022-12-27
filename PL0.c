@@ -776,7 +776,7 @@ void condition(symset fsys) {
 }
 
 void statement(symset fsys) {
-    int i, cx1, cx2;
+    int i, pre_block_false_pc, cx2, pre_leave_pc;
     symset set1, set;
     if (last_sym_read == SYM_IDENTIFIER){   // variable assignment
         mask *mk;
@@ -979,6 +979,9 @@ void statement(symset fsys) {
     else if (last_sym_read == SYM_IF) {
         int saveBlkNum = block_num;
         int saveBlkLvl = block_level;
+        if_else_node* if_else_list = (if_else_node *) malloc(sizeof (if_else_node));
+        if_else_node*head = if_else_list;
+        if_else_list->next = NULL;
 
         jmp_table.is_in_condition_block = inside;
         jmp_table.current_jmp_entry_pc = current_instruction_index;
@@ -998,21 +1001,72 @@ void statement(symset fsys) {
             get_next_symbol();
         else
             error(16); // 'then' expected.
-        cx1 = current_instruction_index;
+        if_else_list->jump_next_block_pc = current_instruction_index;
         gen_instruction(JPC, 0, 0);
         statement(uniteset(fsys, createset(SYM_ELSE, SYM_NULL)));
-
-        if (last_sym_read == SYM_ELSE) {
-            cx2 = current_instruction_index;
-            gen_instruction(JMP, 0, 0);
+        if(last_sym_read != SYM_SEMICOLON){
+            error(10);
+        }else{
             get_next_symbol();
-            code[cx1].addr = current_instruction_index;
-            statement(fsys);
-            code[cx2].addr = current_instruction_index;
-        } else {
-            code[cx1].addr = current_instruction_index;
         }
+        if_else_list->leave_pc = current_instruction_index;
+        gen_instruction(JMP,0,0);
+        int else_flag = 0;
+        while(last_sym_read == SYM_ELSE){
+            else_flag = 1;
+            get_next_symbol();
+            if(last_sym_read == SYM_IF){
+                if_else_list->next = (if_else_node *) malloc(sizeof (if_else_node));
+                if_else_list = if_else_list->next;
+                if_else_list->next = NULL;
 
+                if_else_list->entry_pc = current_instruction_index;
+                get_next_symbol();
+                set1 = createset(SYM_THEN, SYM_NULL); //modified by ZQ
+                set = uniteset(set1, fsys);
+                condition(set);
+                destroyset(set1);
+                destroyset(set);
+                if(last_sym_read == SYM_THEN){
+                    get_next_symbol();
+                }else{
+                    error(16);
+                }
+                if_else_list->jump_next_block_pc = current_instruction_index;
+                gen_instruction(JPC, 0, 0);
+                statement(uniteset(fsys, createset(SYM_ELSE, SYM_NULL)));
+                if(last_sym_read != SYM_SEMICOLON){
+                    error(10);
+                }else{
+                    get_next_symbol();
+                }
+                if_else_list->leave_pc = current_instruction_index;
+                gen_instruction(JMP,0,0);
+            } else{
+                if_else_list->next = (if_else_node *) malloc(sizeof (if_else_node));
+                if_else_list = if_else_list->next;
+                if_else_list->next = NULL;
+                if_else_list->entry_pc = current_instruction_index;
+                if_else_list->jump_next_block_pc = -1;
+                statement(uniteset(fsys, createset( SYM_ELSE, SYM_NULL)));
+                if(last_sym_read != SYM_SEMICOLON){
+                    error(10);
+                }else{
+                    get_next_symbol();
+                }
+                break;
+            }
+        }
+        if(else_flag==0){
+            code[head->leave_pc].addr = current_instruction_index;
+            code[head->jump_next_block_pc].addr = current_instruction_index;
+        }else{
+            while(head->jump_next_block_pc != -1){
+                code[head->leave_pc].addr = current_instruction_index;
+                code[head->jump_next_block_pc].addr = head->next->entry_pc;
+                head = head->next;
+            }
+        }
         out_block(saveBlkNum, saveBlkLvl);
         jmp_table.is_in_condition_block = outside;
     }
@@ -1069,7 +1123,7 @@ void statement(symset fsys) {
         gen_instruction(STP,level,data_alloc_index[level]);
         data_alloc_index[level] += 2;
 
-        cx1 = current_instruction_index;
+        pre_block_false_pc = current_instruction_index;
         get_next_symbol();
         set1 = createset(SYM_DO, SYM_NULL);
         set = uniteset(set1, fsys);
@@ -1085,7 +1139,7 @@ void statement(symset fsys) {
             error(18); // 'do' expected.
         }
         statement(fsys);
-        gen_instruction(JMP, 0, cx1);
+        gen_instruction(JMP, 0, pre_block_false_pc);
         code[cx2].addr = current_instruction_index;
         out_block(saveBlkNum, saveBlkLvl);
 
@@ -1735,7 +1789,7 @@ int main(int argc, char *argv[]) {
 
     if (argc == 1)
 
-        strcpy(s, "../example/array.txt");
+        strcpy(s, "../example/else.txt");
 
     else
         strcpy(s, argv[1]);

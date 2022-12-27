@@ -31,6 +31,7 @@ begin
 end;
 
 begin
+print(1000);
 	if ((result := setjmp(1)) = 2) then
 	    begin
 		    print(1111);
@@ -38,10 +39,10 @@ begin
 		end
 	else begin
 		if ((result := setjmp(2)) = 1) then
-			print(2222)
+			print(2222);
 		else begin
 			print(999);
 			call banana;
-		end
-	end
+		end;
+	end;
 end.
