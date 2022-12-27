@@ -1,12 +1,13 @@
-var j,k;
-procedure p;
+var max;
 begin
-  j := 2;
-end;
-begin
-  for(var i:(10,1, -1))
-  begin
-      print(i, i, i);
-      print();
-  end;
-  end.
+max := 10000;
+for(var i:(1, max, i))
+    begin
+         print(i);
+    end;
+print();
+for(var i:(max, 0, -i/2-1))
+    begin
+         print(i);
+    end;
+end.
