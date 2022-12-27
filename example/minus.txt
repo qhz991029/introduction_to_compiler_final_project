@@ -1,5 +1,0 @@
-var i;
-begin
-    i := -1;
-    writeln(i);
-end.
